@@ -1,1 +1,1 @@
-print("Hello world")
+type(4)
