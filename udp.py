@@ -1,1 +1,4 @@
-type(4)
+import socket
+
+print("Hello")
+
