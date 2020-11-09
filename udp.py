@@ -1,15 +1,16 @@
 import socket
 import threading
 
+
 HEADDER = 64
 FORMAT = 'utf-8'
 PORT = 5050
 #SERVER = socket.gethostbyname(socket.gethostname())
-SERVER = "192.168.1.18"
+SERVER = "192.168.1.14"
 print(SERVER)
 ADDR = (SERVER, PORT)
 DISCONNECT_MESSAGE = "!DISCONNECT"
-server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
 
