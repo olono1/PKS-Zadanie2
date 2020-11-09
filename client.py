@@ -8,7 +8,7 @@ SERVER = "192.168.1.14"
 ADDR = (SERVER, PORT)
 
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 client.connect(ADDR)
 
 def send(msg):
