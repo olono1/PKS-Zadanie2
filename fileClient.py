@@ -3,16 +3,16 @@ import time
 import sys
 
 UDP_IP = "192.168.1.10"
-UDP_PORT = 5005
+UDP_PORT = 5050
 buf = 1024
-file_name = sys.argv[1]
+file_name = b"testfile.txt"
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.sendto(file_name, (UDP_IP, UDP_PORT))
 print (f"Sending {file_name} ...") 
 
-f = open(file_name, "r")
+f = open(file_name, "rb")
 data = f.read(buf)
 while(data):
     if(sock.sendto(data, (UDP_IP, UDP_PORT))):
