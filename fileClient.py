@@ -2,7 +2,7 @@ import socket
 import time
 import sys
 
-UDP_IP = "127.0.0.1"
+UDP_IP = "192.168.1.10"
 UDP_PORT = 5005
 buf = 1024
 file_name = sys.argv[1]
