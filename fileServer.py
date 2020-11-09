@@ -1,7 +1,7 @@
 import socket
 import select
 
-UDP_IP = "127.0.0.1"
+UDP_IP = "192.168.1.10"
 IN_PORT = 5005
 timeout = 3
 
