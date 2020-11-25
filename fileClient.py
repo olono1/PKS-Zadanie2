@@ -2,10 +2,10 @@ import socket
 import time
 import sys
 
-UDP_IP = "192.168.1.10"
+UDP_IP = "192.168.1.14"
 UDP_PORT = 5050
-buf = 1024
-file_name = b"testfile.txt"
+buf = 32
+file_name = b"OdUz.png"
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
