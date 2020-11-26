@@ -2,17 +2,17 @@ import socket
 import time
 import sys
 
-UDP_IP = "192.168.1.10"
-UDP_PORT = 5005
-buf = 1024
-file_name = sys.argv[1]
+UDP_IP = "192.168.1.14"
+UDP_PORT = 5050
+buf = 32
+file_name = b"OdUz.png"
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.sendto(file_name, (UDP_IP, UDP_PORT))
 print (f"Sending {file_name} ...") 
 
-f = open(file_name, "r")
+f = open(file_name, "rb")
 data = f.read(buf)
 while(data):
     if(sock.sendto(data, (UDP_IP, UDP_PORT))):
