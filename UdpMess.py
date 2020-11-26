@@ -39,9 +39,26 @@ def start_reciever():
 def exit_prog():
     return
 
+
 #Common functions > Sending COMM packets, Bit operations, 
-def send_COMM(type):
+
+def get_byte_ack(number):
+    return number.to_bytes(4, byteorder='big', signed=False)
+
+
+def send_COMM(type, ack_no):
     print(COMM_values.COMM_type[type])
+
+    headder = bytearray()
+
+    decimal_flag = COMM_values.COMM_type[type]
+    flag = decimal_flag.to_bytes(1, byteorder='big', signed=False)
+    print(flag)
+    headder.append(decimal_flag)
+   
+    headder.append(get_byte_ack(ack_no))
+    print(headder)
+
  
 
 
@@ -63,5 +80,5 @@ def get_connection_info():
     print(MY_IP_ADDR)
 
 get_connection_info()
-send_COMM("SYN")
+send_COMM("SYN", 5)
 
