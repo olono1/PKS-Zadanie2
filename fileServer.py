@@ -1,7 +1,7 @@
 import socket
 import select
 
-UDP_IP = "192.168.1.10"
+UDP_IP = "192.168.1.14"
 IN_PORT = 5050
 timeout = 3
 
@@ -20,7 +20,7 @@ while True:
     while True:
         ready = select.select([sock], [], [], timeout)
         if ready[0]:
-            data, addr = sock.recvfrom(1024)
+            data, addr = sock.recvfrom(32)
             f.write(data)
         else:
             print (f" Finish! {file_name}")
