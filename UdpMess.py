@@ -4,7 +4,11 @@
 import socket
 import time
 import sys
+import os
 import zlib
+
+#Custom imports
+import COMM_values
 
 
 MY_IP_ADDR = "Not set"
@@ -26,7 +30,7 @@ def get_mode_from_user():
 def start_sender():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-
+    
     return
 
 def start_reciever():
@@ -35,16 +39,29 @@ def start_reciever():
 def exit_prog():
     return
 
+#Common functions > Sending COMM packets, Bit operations, 
+def send_COMM(type):
+    print(COMM_values.COMM_type[type])
+ 
+
+
+def send_DATA(type, data_in_bits, fragment_lenght):
+    
+    return
+
+
+
 def get_connection_info():
     f = open("config.txt", "r")
     MY_IP_ADDR = f.readline().split()[0]
     COMM_PORT = f.readline().split()[0]
     OUT_IP_ADDR = f.readline().split()[0]
 
+    print(os.path.realpath(f.name))
     print(OUT_IP_ADDR)
     print(COMM_PORT)
     print(MY_IP_ADDR)
 
 get_connection_info()
-
+send_COMM("SYN")
 
