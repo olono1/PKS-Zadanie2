@@ -38,6 +38,7 @@ def __activate_connection():
 def start_reciever(Reciever_obj: Reciever):
     sock = Reciever_obj.get_socket()
     timeout = Reciever_obj.get_timeout()
+    
     while True:
         ready = select.select([sock], [], [], timeout)
         if ready[0]:
