@@ -4,7 +4,7 @@ import time
 import binascii
 
 #Custom imports
-import UdpMess
+import Send_recv_func
 
 
 class Sender:
@@ -30,7 +30,7 @@ class Sender:
 def start_sender(Sender_obj: Sender):
     #sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     send_mode = input("1: Send Message\n2: Send File\n3:Disconnect")
-    Sender_obj.get_socket().sendto(UdpMess.send_COMM("ACK"), Sender_obj.get_tuple())
+    Sender_obj.get_socket().sendto(Send_recv_func.send_COMM("ACK", 5), Sender_obj.get_tuple())
 
 
     
