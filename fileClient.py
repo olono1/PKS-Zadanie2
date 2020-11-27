@@ -5,7 +5,7 @@ import sys
 UDP_IP = "192.168.1.14"
 UDP_PORT = 5050
 buf = 32
-file_name = b"OdUz.png"
+file_name = b"testfile.txt"
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
