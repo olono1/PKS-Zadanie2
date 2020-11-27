@@ -30,7 +30,7 @@ def get_mode_from_user():
     if mode == '1':
         init_sender()
     elif mode == '2':
-        UdpMess__sender.start_reciever()
+        init_reciever()
     elif mode == '3':
         exit_prog()
 
@@ -47,7 +47,8 @@ def init_sender():
 def init_reciever():
     get_connection_info()
     Comunication = UdpMess__reciever.Reciever(MY_IP_ADDR, COMM_PORT)
-    
+    UdpMess__reciever.start_reciever(Comunication)
+
 
 
 
