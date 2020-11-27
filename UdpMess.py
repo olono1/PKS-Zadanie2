@@ -47,6 +47,7 @@ def init_sender():
 def init_reciever():
     get_connection_info()
     Comuni = UdpMess__reciever.Reciever(MY_IP_ADDR, COMM_PORT)
+    Comuni.define_socket((MY_IP_ADDR, COMM_PORT))
     UdpMess__reciever.start_reciever(Comuni)
 
 
