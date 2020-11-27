@@ -1,10 +1,14 @@
 
 #Imports
 import socket
+import zlib
+import time
+import binascii
 import select
 
+
 #Custom Import 
-import UdpMess
+#import UdpMess
 
 #Private variables
 
@@ -14,7 +18,7 @@ class Reciever:
         self.__my_IP_address = IP
         self.__port = port
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.__timeout = 3
+        self.__timeout = 10
         self.__active_connection = False
     
     def define_socket(self, tuple_IP_port):
@@ -25,11 +29,6 @@ class Reciever:
     
     def get_timeout(self):
         return self.__timeout
-
-    
-
-
-
 
 
 def __activate_connection():
