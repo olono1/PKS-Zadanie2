@@ -44,6 +44,10 @@ def start_reciever(Reciever_obj: Reciever):
         if ready[0]:
             data, addr = sock.recvfrom(508)
             print(f"Recieved: {data}, from {addr} \n")
+            dec_data = Send_recv_func.decode_and_recieve(data)
+            print(f"We got {dec_data['FLAG']} with ACK no: {dec_data['ACK']} and a CRC: {dec_data['CRC']}")
+            
+
           
         else:
             print (f" Finish!")

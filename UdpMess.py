@@ -67,9 +67,6 @@ def exit_prog():
  
 
 
-def send_DATA(type, data_in_bits, fragment_lenght):
-    
-    return
 
 
 
