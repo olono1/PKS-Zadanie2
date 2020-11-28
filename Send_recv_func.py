@@ -104,6 +104,11 @@ def get_pkt_type(flag):
     elif (flag < 128):
         return "DATA"
 
+def send_out_COMM(Comunication_obj, flag, ACK):
+    data_to_send = send_COMM(flag, ACK)
+    out_tuple = Comunication_obj.get_out_tuple()
+    Comunication_obj.get_socket().sendto(data_to_send, out_tuple)
+
 
 def check_CRC_match(recieved_crc, counted_crc):
     if recieved_crc == counted_crc:
@@ -129,9 +134,6 @@ def decode_COMM(b_data):
         return False
 
     return pkt_dict
-
-
-
     
 
 def decode_DATA(b_data):

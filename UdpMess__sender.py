@@ -3,8 +3,10 @@ import zlib
 import time
 import binascii
 import threading
+import select
 #Custom imports
 import Send_recv_func
+import COMM_values
 
 
 
@@ -40,6 +42,9 @@ class Sender:
     def is_conn_estab(self):
         return self.__active_connection
 
+    def set_connection_established_status(self, status):
+        self.__active_connection = status
+
     def get_SQ_num(self):
         return self.__SQ_num
 
@@ -52,8 +57,38 @@ def establish_connection(Sender_obj):
     if Sender_obj.is_conn_estab():
         return True
     else:
+        sock = Sender_obj.get_socket()
+        timeout = TIMEOUT
+        no_response = 0
+        Send_recv_func.send_out_COMM(Sender_obj, "SYN", 0)
+        syn_sent_and_ack = False
+        while True:
+            ready = select.select([sock], [], [], timeout)
+            if ready[0]:
+                data, addr = sock.recvfrom(MAX_RECV_FROM)
+                dec_data = Send_recv_func.decode_and_recieve(data)
+                if dec_data == False:
+                    Send_recv_func.send_out_COMM(Sender_obj, "ERR", 0)
+                elif dec_data['FLAG'] == COMM_values.COMM_type["SYN, ACK"]:
+                    Send_recv_func.send_out_COMM(Sender_obj, "ACK", 0)
+                    syn_sent_and_ack = True
+                    Sender_obj.set_connection_established_status(True)
+                elif dec_data['FLAG'] == COMM_values.COMM_type["ERR"]:
+                    if syn_sent_and_ack == True:
+                        Send_recv_func.send_out_COMM(Sender_obj, "ACK", 0)
+                    else:
+                        Send_recv_func.send_out_COMM(Sender_obj, "SYN", 0)
+            else:
+                print("Reply for SYN timeout. Trying again...")
+                no_response += 1
+            if no_response > 2:
+                print("Connection could not be established")
+                return False
+            Send_recv_func.send_out_COMM(Sender_obj, "SYN", 0)
+
+
+
         
-        pass
     
     return True
 

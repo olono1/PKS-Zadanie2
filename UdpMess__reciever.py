@@ -11,6 +11,7 @@ MAX_RECV_FROM = 508
 
 #Custom Import 
 import Send_recv_func
+import COMM_values
 
 #Private variables
 
@@ -44,28 +45,48 @@ class Reciever:
         return self.__active_connection
 
 
-
-
-
-def start_reciever(Reciever_obj: Reciever):
+def listen_for_connection(Reciever_obj):
     sock = Reciever_obj.get_socket()
     timeout = Reciever_obj.get_timeout()
 
     while not Reciever_obj.is_conn_estab():
         ##Wait for SYN packet
+        syn_recv_and_replied = False
+        no_response = 0
         while True:
             ready = select.select([sock], [], [], timeout)
             if ready[0]:
                 data, addr = sock.recvfrom(MAX_RECV_FROM)
                 dec_data = Send_recv_func.decode_and_recieve(data)
                 if dec_data == False:
-                    pass
-                else:
-                    Reciever_obj.get_socket().sendto(Send_recv_func.send_COMM("SYN, ACK", 0), Reciever_obj.get_out_tuple())
+                    Send_recv_func.send_out_COMM(Reciever_obj, "ERR", 0)
+                elif dec_data['FLAG'] == COMM_values.COMM_type['SYN']:
+                    Send_recv_func.send_out_COMM(Reciever_obj, "SYN, ACK", 0)
+                    syn_recv_and_replied = True
+                if syn_recv_and_replied and dec_data['FLAG'] == COMM_values.COMM_type['ACK']:
+                    Reciever_obj.set_conn_status(True)
+                    break
+                if dec_data['FLAG'] == COMM_values.COMM_type["ERR"]:
+                    if syn_recv_and_replied == True:
+                        Send_recv_func.send_out_COMM(Reciever_obj, "SYN, ACK", 0)
+            else:
+                if syn_recv_and_replied == True:
+                    Send_recv_func.send_out_COMM(Reciever_obj, "SYN, ACK", 0)
+                    no_response += 1
+                if no_response > 2:
+                    print("Connection could not be established.")
+                    return False
 
 
 
+    return True
 
+
+def start_reciever(Reciever_obj: Reciever):
+    sock = Reciever_obj.get_socket()
+    timeout = Reciever_obj.get_timeout()
+
+    outcome = listen_for_connection(Reciever_obj)
     
     while True:
         ready = select.select([sock], [], [], timeout)
