@@ -62,6 +62,7 @@ def get_connection_info():
     global MY_IP_ADDR 
     global COMM_PORT 
     global OUT_IP_ADDR
+    global OUT_COMM_PORT
     with open("config.txt", "r") as f:
         MY_IP_ADDR = f.readline().split()[0]
         COMM_PORT = int(f.readline().split()[0])
