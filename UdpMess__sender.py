@@ -17,6 +17,9 @@ TEXT_ENCODING_FORMAT = 'utf-8'
 
 base = 0
 mutex = threading.Lock()
+timeout_pass = False
+ack_done = False
+
 
 
 class Sender:
@@ -47,6 +50,11 @@ class Sender:
 
     def get_SQ_num(self):
         return self.__SQ_num
+
+    def reserve_SQ_num(self):
+        SQ_num = self.__SQ_num
+        self.__SQ_num += 1
+        return SQ_num
 
     def add_SQ_num(self):
         self.__SQ_num += 1
@@ -79,10 +87,13 @@ def establish_connection(Sender_obj):
                     else:
                         Send_recv_func.send_out_COMM(Sender_obj, "SYN", 0)
             else:
+                if Sender_obj.is_conn_estab() == True:
+                    return True
                 print("Reply for SYN timeout. Trying again...")
                 no_response += 1
             if no_response > 2:
                 print("Connection could not be established")
+                print(Sender_obj.is_conn_estab())
                 return False
             Send_recv_func.send_out_COMM(Sender_obj, "SYN", 0)
 
@@ -92,38 +103,121 @@ def establish_connection(Sender_obj):
     
     return True
 
+def get_list_data_file(Sender_obj):
+    flag = "FILE"
+    load_data = input("Enter the file name>>> ")
+    file_name = load_data.encode(TEXT_ENCODING_FORMAT)
+    file_name_list = Send_recv_func.prepare_DATA(flag, file_name, 500, Sender_obj)
+
+    with open(load_data, "rb") as bin_file:
+        data = bin_file.read()
+        load_data = data
+    
+    frag_len = input("Enter Fragment lenght>>> ")
+    file_bits_list = Send_recv_func.prepare_DATA(flag, load_data, int(frag_len), Sender_obj)
+    return file_bits_list
+
+def get_list_data_msg(Sender_obj):
+    flag = "MSG"
+    load_data = input("Enter your super-duper message>>> ")
+    binary_msg = load_data.encode(TEXT_ENCODING_FORMAT)
+    load_data = binary_msg
+    frag_len = input("Enter fragment length>>> ")
+    msg_bits_list = Send_recv_func.prepare_DATA(flag, binary_msg, frag_len)
+    return msg_bits_list
+        
+
+
 def start_sender(Sender_obj: Sender):
     #sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     send_mode = input("1: Send Message\n2: Send File\n3:Disconnect")
     flag = ""
+    list_data = ""
+    start_SQ = Sender_obj.get_SQ_num()
     if(send_mode == "1"):
-        load_data = input("Enter your super-duper message>>> ")
-        binary_msg = load_data.encode(TEXT_ENCODING_FORMAT)
-        load_data = binary_msg
-        flag = "MSG"
+        list_data = get_list_data_msg(Sender_obj)
     elif send_mode == "2":
-        load_data = input("Enter the file name>>> ")
-        with open(load_data, "rb") as bin_file:
-            data = bin_file.read()
-            load_data = data
-        flag = "FILE"
+        list_data = get_list_data_file(Sender_obj)    
     elif send_mode == "3":
         load_data = input("The connection will be ended. Are you sure? Y/N")
 
     if establish_connection(Sender_obj):
         print("Connection Established")
 
-    fragment_size = input("Enter fragment size>>> ")
-    start_SQ = Sender_obj.get_SQ_num()
+    
+    send_DATA(Sender_obj, list_data)
 
 
-
-
-    list_data = Send_recv_func.prepare_DATA(flag, load_data, 30, 30)
-
-
-    Sender_obj.get_socket().sendto(Send_recv_func.send_COMM("ACK", 5), Sender_obj.get_tuple())
+    #Sender_obj.get_socket().sendto(Send_recv_func.send_COMM("ACK", 5), Sender_obj.get_tuple())
 
 
     
     return
+
+
+def get_window_size(list_size):
+    global base
+    win_size = min(WINDOW_SIZE, list_size - base)
+    return win_size
+
+def send_DATA(Sender_obj: Sender, list_data: list):
+    global base
+    global mutex
+    global timeout_pass
+    global ack_done
+
+    next_frag = 0
+    sock = Sender_obj.get_socket()
+    itr_win_size = get_window_size(len(list_data))
+
+    recv_thread = threading.Thread(target=recv_feedback, args=(Sender_obj,))
+
+    while True:
+        mutex.acquire()
+
+        while next_frag < base + itr_win_size:
+            Send_recv_func.send_out_DATA(Sender_obj, list_data[next_frag])
+            next_frag += 1
+
+        while not ack_done and not timeout_pass:
+            mutex.release()
+            time.sleep(TIMEOUT)
+            mutex.acquire()
+        
+        if timeout_pass:
+            timeout_pass = False
+            next_frag = base
+        else:
+            itr_win_size = get_window_size(len(list_data))
+
+        mutex.release()
+        if base < len(list_data):
+            break
+
+
+
+   
+    return
+
+def recv_feedback(Sender_obj: Sender):
+    global mutex
+    global base
+    global timeout_pass
+    global ack_done
+
+    sock = Sender_obj.get_socket()
+    while True:
+        ready = select.select([sock], [], [], TIMEOUT)
+        if ready[0]:
+            data, addr = sock.recvfrom(MAX_RECV_FROM)
+            dec_data = Send_recv_func.decode_and_recieve(data)
+            if dec_data['FLAG'] == COMM_values.COMM_type["ACK"]:
+                if int(dec_data['ACK']) >= base:
+                    mutex.acquire()
+                    base = int(dec_data['ACK']) + 1
+                    ack_done = True
+                    mutex.release()
+        else:
+            mutex.acquire()
+            timeout_pass = True
+            mutex.release()

@@ -55,7 +55,6 @@ def init_reciever():
 def exit_prog():
     return
 
-
 #Common functions > Sending COMM packets, Bit operations, 
 
 def get_connection_info():
@@ -69,10 +68,8 @@ def get_connection_info():
         OUT_IP_ADDR = f.readline().split()[0]
         OUT_COMM_PORT = int(f.readline().split()[0])
 
-    print(os.path.realpath(f.name))
-    print(OUT_IP_ADDR)
-    print(COMM_PORT)
-    print(MY_IP_ADDR)
+    print(f"My IP address: {MY_IP_ADDR} : {COMM_PORT}")
+    print(f"Connecting to: {OUT_IP_ADDR} : {OUT_COMM_PORT}")
 
 
 get_mode_from_user()

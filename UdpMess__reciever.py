@@ -88,6 +88,14 @@ def start_reciever(Reciever_obj: Reciever):
 
     outcome = listen_for_connection(Reciever_obj)
     
+
+    if outcome == True:
+        listen()
+    else:
+        print("Connection was not established")
+
+
+
     """
     while True:
         ready = select.select([sock], [], [], timeout)
@@ -105,3 +113,7 @@ def start_reciever(Reciever_obj: Reciever):
             break
     """
     return
+
+
+def listen():
+    pass
