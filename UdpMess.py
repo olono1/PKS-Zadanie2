@@ -17,6 +17,7 @@ import UdpMess__sender
 MY_IP_ADDR = "Not set"
 COMM_PORT = "Not set"
 OUT_IP_ADDR = "Not set"
+OUT_COMM_PORT = "Not set"
 MAX_RECV_FROM = 508
 
 
@@ -39,15 +40,13 @@ def get_mode_from_user():
 
 def init_sender():
     get_connection_info()
-    Comunication = UdpMess__sender.Sender(OUT_IP_ADDR, COMM_PORT)
-    Comunication.set_my_IP(MY_IP_ADDR)
+    Comunication = UdpMess__sender.Sender(MY_IP_ADDR, COMM_PORT, OUT_IP_ADDR, OUT_COMM_PORT)
     UdpMess__sender.start_sender(Comunication)
 
 
 def init_reciever():
     get_connection_info()
-    Comuni = UdpMess__reciever.Reciever(MY_IP_ADDR, COMM_PORT)
-    Comuni.define_socket((MY_IP_ADDR, COMM_PORT))
+    Comuni = UdpMess__reciever.Reciever(MY_IP_ADDR, COMM_PORT, OUT_IP_ADDR, OUT_COMM_PORT)
     UdpMess__reciever.start_reciever(Comuni)
 
 
@@ -59,17 +58,6 @@ def exit_prog():
 
 #Common functions > Sending COMM packets, Bit operations, 
 
-
-
-
-
-
- 
-
-
-
-
-
 def get_connection_info():
     global MY_IP_ADDR 
     global COMM_PORT 
@@ -78,6 +66,7 @@ def get_connection_info():
         MY_IP_ADDR = f.readline().split()[0]
         COMM_PORT = int(f.readline().split()[0])
         OUT_IP_ADDR = f.readline().split()[0]
+        OUT_COMM_PORT = int(f.readline().split()[0])
 
     print(os.path.realpath(f.name))
     print(OUT_IP_ADDR)
