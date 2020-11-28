@@ -64,11 +64,39 @@ def send_COMM(type, ack_no):
     #print(headder)
     return byte_hex_arr
 
+def count_lenght(data_to_prep, frag_len):
+    if(data_to_prep > frag_len):
+        return frag_len
+    else:
+        return data_to_prep
+    
+def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, last_SQ):
+    data_to_prepare = len(data_in_bits)
+    fragments = list() 
+    SQ_num = 1
+    while data_to_prepare > 0:
+        fragment_x = bytearray()
+        fragment_x.append(COMM_values.COMM_type[pkt_type])
+        frag_len = count_lenght(data_to_prepare, fragment_lenght)
+        fragment_x.extend(frag_len.to_bytes(2, byteorder='big', signed=False))
+        fragment_x.extend(get_byte_ack(SQ_num + last_SQ))
+        
+        fragment_data = bytearray(data_in_bits[((SQ_num-1) * fragment_lenght):(SQ_num*fragment_lenght)])
 
-    
-def send_DATA(type, data_in_bits, fragment_lenght):
-    
-    return
+        data_for_crc = fragment_x + fragment_data
+        crc32 = zlib.crc32(data_for_crc)
+        fragment_x.extend(crc32.to_bytes(4, byteorder='big', signed=False))
+        fragment_x.extend(fragment_data)
+        fragments.append(fragment_x)
+        print(decode_DATA(fragment_x))
+        SQ_num += 1
+        data_to_prepare -= frag_len
+
+
+
+
+
+    return fragments
 
 def get_pkt_type(flag):
     if(flag >= 128):
@@ -76,11 +104,30 @@ def get_pkt_type(flag):
     elif (flag < 128):
         return "DATA"
 
+
+def check_CRC_match(recieved_crc, counted_crc):
+    if recieved_crc == counted_crc:
+        return True
+    else:
+        print(f"CRC mismatch. Packet CRC was{recieved_crc}. Counted CRC was {counted_crc}")
+        return False
+
 def decode_COMM(b_data):
+
+    headder = bytearray(b_data[0:5])
+    crc32 = zlib.crc32(headder)
+
+
+
     pkt_dict = {}
     pkt_dict['FLAG'] = b_data[0]
     pkt_dict['ACK'] = int.from_bytes(b_data[1:5], byteorder='big')
     pkt_dict['CRC'] = int.from_bytes(b_data[5:9], byteorder='big')
+
+    
+    if not check_CRC_match(pkt_dict['CRC'], crc32):
+        return False
+
     return pkt_dict
 
 
@@ -88,12 +135,28 @@ def decode_COMM(b_data):
     
 
 def decode_DATA(b_data):
-    pass
+
+    headder = bytearray(b_data[0:7])
+    data_arr = bytearray(b_data[11:len(b_data)])
+    headd_and_data = headder + data_arr
+
+    crc32 = zlib.crc32(headd_and_data)
+
+    pkt_dict = {}
+    pkt_dict['FLAG'] = b_data[0]
+    pkt_dict['LEN'] = int.from_bytes(b_data[1:3], byteorder='big')
+    pkt_dict['SQ'] = int.from_bytes(b_data[3:7], byteorder='big')
+    pkt_dict['CRC'] = int.from_bytes(b_data[7:11], byteorder='big')
+    pkt_dict['DATA'] = b_data[11:len(b_data)]
+
+    if not check_CRC_match(pkt_dict['CRC'], crc32):
+        return False
+
+    return pkt_dict
 
 def decode_and_recieve(b_data):
     decoded_data_list = list()
     pkt_dict = {}
-    hex_btarr = send_COMM("SYN", 50)
 
 
     pkt_type = get_pkt_type(b_data[0])
@@ -102,24 +165,14 @@ def decode_and_recieve(b_data):
         pkt_dict = decode_COMM(b_data)
     elif (pkt_type == "DATA"):
         pkt_dict = decode_DATA(b_data)
-
-
-    print(hex_btarr[0])
-    decoded_data_list.append(hex_btarr[0])
-    print(hex_btarr[1:5])
-    print(int.from_bytes(hex_btarr[1:5], byteorder='big'))
-    decoded_data_list.append(int.from_bytes(hex_btarr[1:5], byteorder='big'))
-    print(int.from_bytes(hex_btarr[5:len(hex_btarr)], byteorder='big'))
-    decoded_data_list.append(int.from_bytes(hex_btarr[5:len(hex_btarr)], byteorder='big'))
-
  
 
     print(f"Dictionary: {pkt_dict}")
     print(f"List rep: {decoded_data_list}")
-
-
-
     
     return pkt_dict
 
-decode_and_recieve(send_COMM("SYN", 50))
+
+#list_data = prepare_DATA("MSG", b'Hello, how are you, Im fine', 5, 30)
+#decode_and_recieve(list_data[0])
+#decode_and_recieve(send_COMM("SYN", 50))
