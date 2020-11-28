@@ -19,10 +19,10 @@ class Reciever:
 
     def __init__(self, my_ip, port_my, out_ip, port_out): 
         self.__my_IP_address = my_ip
-        self.__port_my = port_my
+        self.__port_my = int(port_my)
         self.__out_ip = out_ip
-        self.__port_out = port_out
-        self.__out_tuple = (out_ip, port_out)
+        self.__port_out = int(port_out)
+        self.__out_tuple = (out_ip, int(port_out))
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.__sock.bind((my_ip, port_my))
         self.__timeout = 10

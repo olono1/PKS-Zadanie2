@@ -22,10 +22,10 @@ mutex = threading.Lock()
 class Sender:
     def __init__(self, my_ip, port_my, out_ip, port_out): 
         self.__my_IP_address = my_ip
-        self.__port_my = port_my
+        self.__port_my = int(port_my)
         self.__out_ip = out_ip
-        self.__port_out = port_out
-        self.__out_tuple = (out_ip, port_out)
+        self.__port_out = int(port_out)
+        self.__out_tuple = (out_ip, int(port_out))
         self.__SQ_num = 1
         #print(self.__IP_port_tuple)
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -111,7 +111,7 @@ def start_sender(Sender_obj: Sender):
         load_data = input("The connection will be ended. Are you sure? Y/N")
 
     if establish_connection(Sender_obj):
-        pass
+        print("Connection Established")
 
     fragment_size = input("Enter fragment size>>> ")
     start_SQ = Sender_obj.get_SQ_num()
