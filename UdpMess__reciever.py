@@ -88,6 +88,7 @@ def start_reciever(Reciever_obj: Reciever):
 
     outcome = listen_for_connection(Reciever_obj)
     
+    """
     while True:
         ready = select.select([sock], [], [], timeout)
         if ready[0]:
@@ -102,4 +103,5 @@ def start_reciever(Reciever_obj: Reciever):
             print (f" Finish!")
            
             break
+    """
     return
