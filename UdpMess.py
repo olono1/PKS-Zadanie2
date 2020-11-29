@@ -40,6 +40,7 @@ def get_mode_from_user():
 
 def init_sender():
     get_connection_info()
+    ##TODO: #5 add a try statement, that handles the Error, telling the user to check the config file
     Comunication = UdpMess__sender.Sender(MY_IP_ADDR, COMM_PORT, OUT_IP_ADDR, OUT_COMM_PORT)
     UdpMess__sender.start_sender(Comunication)
 
