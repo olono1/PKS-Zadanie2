@@ -174,7 +174,7 @@ def decode_and_recieve(b_data):
  
 
     print(f"Dictionary: {pkt_dict}")
-    print(f"List rep: {decoded_data_list}")
+    #print(f"List rep: {decoded_data_list}")
     
     return pkt_dict
 
