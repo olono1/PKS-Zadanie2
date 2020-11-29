@@ -11,7 +11,7 @@ import COMM_values
 
 
 MAX_RECV_FROM = 508
-TIMEOUT = 5
+TIMEOUT = 1
 WINDOW_SIZE = 5
 TEXT_ENCODING_FORMAT = 'utf-8'
 
@@ -171,6 +171,7 @@ def send_DATA(Sender_obj: Sender, list_data: list):
     itr_win_size = get_window_size(len(list_data))
 
     recv_thread = threading.Thread(target=recv_feedback, args=(Sender_obj,))
+    recv_thread.start()
 
     while True:
         mutex.acquire()
@@ -178,6 +179,8 @@ def send_DATA(Sender_obj: Sender, list_data: list):
         while next_frag < base + itr_win_size:
             Send_recv_func.send_out_DATA(Sender_obj, list_data[next_frag])
             next_frag += 1
+
+        ack_done = False
 
         while not ack_done and not timeout_pass:
             mutex.release()
@@ -189,13 +192,14 @@ def send_DATA(Sender_obj: Sender, list_data: list):
             next_frag = base
         else:
             itr_win_size = get_window_size(len(list_data))
+            
 
         mutex.release()
-        if base < len(list_data):
+        if base >= len(list_data):
             break
 
 
-
+    Send_recv_func.send_out_COMM(Sender_obj, "DONE", 0)
    
     return
 
@@ -205,6 +209,8 @@ def recv_feedback(Sender_obj: Sender):
     global timeout_pass
     global ack_done
 
+    print("I'm working")
+
     sock = Sender_obj.get_socket()
     while True:
         ready = select.select([sock], [], [], TIMEOUT)
@@ -213,6 +219,7 @@ def recv_feedback(Sender_obj: Sender):
             dec_data = Send_recv_func.decode_and_recieve(data)
             if dec_data['FLAG'] == COMM_values.COMM_type["ACK"]:
                 if int(dec_data['ACK']) >= base:
+                    print("Got correct ACK")
                     mutex.acquire()
                     base = int(dec_data['ACK']) + 1
                     ack_done = True
