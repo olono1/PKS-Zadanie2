@@ -179,11 +179,9 @@ def start_sender(Sender_obj: Sender):
 
         sending_file_mutex.acquire()
         sending_file = True
-        sending_file_mutex.release()
         ##TODO: #3 Change sending_file variable True
         send_DATA(Sender_obj, list_data, corupted)
         print("File, sent")
-        sending_file_mutex.acquire()
         sending_file = False
         sending_file_mutex.release()
         ##TODO: #4 Change sending_file variable to False
@@ -196,9 +194,9 @@ def start_sender(Sender_obj: Sender):
     return
 
 
-def get_window_size(list_size):
+def get_window_size(list_size, fisrt_sq):
     global base
-    win_size = min(WINDOW_SIZE, list_size - base)
+    win_size = min(WINDOW_SIZE, (list_size+fisrt_sq) - base)
     return win_size
 
 def create_error_packet(dict_data):
@@ -218,11 +216,13 @@ def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
     timeout_pass = False
     ack_done = False
     stop_feedback = False
-    base = 0
+    base = Sender_obj.get_SQ_num()
 
-    next_frag = 0
+    first_sq = Sender_obj.get_SQ_num()
+
+    next_frag = Sender_obj.get_SQ_num()
     sock = Sender_obj.get_socket()
-    itr_win_size = get_window_size(len(list_data))
+    itr_win_size = get_window_size(len(list_data), first_sq)
 
     recv_thread = threading.Thread(target=recv_feedback, args=(Sender_obj,))
     recv_thread.start()
@@ -246,7 +246,7 @@ def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
                 Send_recv_func.send_out_DATA(Sender_obj, error_sim_packet)
                 corupted_sent = True
             else:
-                Send_recv_func.send_out_DATA(Sender_obj, list_data[next_frag])
+                Send_recv_func.send_out_DATA(Sender_obj, list_data[next_frag - first_sq])
             next_frag += 1
 
         ack_done = False
@@ -260,11 +260,11 @@ def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
             timeout_pass = False
             next_frag = base - 1
         else:
-            itr_win_size = get_window_size(len(list_data))
+            itr_win_size = get_window_size(len(list_data), first_sq)
             
 
         mutex.release()
-        if base >= len(list_data):
+        if base >= (len(list_data) + first_sq):
             break
 
 
