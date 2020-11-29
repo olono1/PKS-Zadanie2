@@ -181,7 +181,7 @@ def process_recieved(fragmetns_list):
         print(f"Fragment size: {fragmetns_list[0]['LEN']}")
         print(f"Last fragment size: {fragmetns_list[len(fragmetns_list)-1]['LEN']}")
 
-        pass
+        
     elif data_type == "FILE":
         byte_file_name = bytearray()
         byte_file_name.extend(fragmetns_list[0]['DATA'])
@@ -192,4 +192,4 @@ def process_recieved(fragmetns_list):
                 f.write(fragmetns_list[frag_sq]['DATA'])
         print("File recieved and saved sucesfully")
         
-        pass
+        
