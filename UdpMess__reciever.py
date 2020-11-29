@@ -134,7 +134,7 @@ def start_reciever(Reciever_obj: Reciever):
 
 def listen(Reciever_obj: Reciever):
     recieved_fragments = []
-
+    no_respose = 0
     sock = Reciever_obj.get_socket()
     timeout = Reciever_obj.get_timeout()
 
@@ -164,6 +164,14 @@ def listen(Reciever_obj: Reciever):
                     Reciever_obj.reset_expected_sq()
                 elif dec_data['FLAG'] == COMM_values.COMM_type["FIN"]:
                     conn_ended = listen_for_conn_end(Reciever_obj)
+                    return
+            no_respose = 0
+        else:
+            no_respose += 1
+            if no_respose > 3:
+                print("Sender did not send keep_alive or data. Timeout Exceeded")
+                print("Connection terminated. Sender did not send anything anymore")
+                return
 
             
 def listen_for_conn_end(Reciever_obj):

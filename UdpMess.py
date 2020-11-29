@@ -53,7 +53,7 @@ def init_reciever():
 
 
 def exit_prog():
-    return
+    exit()
 
 #Common functions > Sending COMM packets, Bit operations, 
 

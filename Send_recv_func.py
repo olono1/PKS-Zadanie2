@@ -144,7 +144,7 @@ def decode_and_recieve(b_data):
         pkt_dict = decode_DATA(b_data)
  
     ### UN-COMMENT TO SEE WHAT DATA IS BEING RECIEVED ON BOTH ENDS
-    #print(f"Recieved: {pkt_dict}")
+    print(f"Recieved: {pkt_dict}")
     
     return pkt_dict
 
