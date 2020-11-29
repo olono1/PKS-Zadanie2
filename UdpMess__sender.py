@@ -20,6 +20,7 @@ TEXT_ENCODING_FORMAT = 'utf-8'
 sending_file_mutex = threading.Lock()
 sending_file = True
 keep_alive_error = False
+disconecting = False
 
 base = 0
 mutex = threading.Lock()
@@ -144,9 +145,10 @@ def start_sender(Sender_obj: Sender):
     global sending_file_mutex
     global sending_file
     global keep_alive_error
-
+    global disconecting
     sending_file = True
     keep_alive_error = False
+    disconecting = False
 
     keep_alive_thread = threading.Thread(target=send_keep_alive, args=(Sender_obj,))
     keep_alive_thread.start()
@@ -161,6 +163,12 @@ def start_sender(Sender_obj: Sender):
             list_data = get_list_data_file(Sender_obj)    
         elif send_mode == "3":
             load_data = input("The connection will be ended. Are you sure? Y/N")
+            sending_file_mutex.acquire()
+            disconecting = True
+            sending_file_mutex.release()
+            keep_alive_thread.join()
+            end_connection(Sender_obj)
+            return
 
         ##TODO: #1 Check if the Conection has not been terminated by keep_alive protocol
         if keep_alive_error == True:
@@ -315,6 +323,7 @@ def send_keep_alive(Sender_obj):
     global sending_file
     global keep_alive_error
     global sending_file_mutex
+    global disconecting
     sock = Sender_obj.get_socket()
     timeout = 4
     no_response = 0
@@ -328,6 +337,8 @@ def send_keep_alive(Sender_obj):
             sending_file_mutex.acquire()
             Send_recv_func.send_out_COMM(Sender_obj, "CONN", 0)
             while True:
+                if disconecting == True:
+                    break
                 ready = select.select([sock], [], [], timeout)
                 if ready[0]:
                     data, addr = sock.recvfrom(MAX_RECV_FROM)
@@ -347,11 +358,37 @@ def send_keep_alive(Sender_obj):
                         print("Conection terminated")
                         keep_alive_error = True
                         break
-            if keep_alive_error == True:
+            if keep_alive_error == True or disconecting == True:
                 break
             sending_file_mutex.release()
     sending_file_mutex.release()
                     
 
+def end_connection(Sender_obj):
+    Send_recv_func.send_out_COMM(Sender_obj, "FIN", 0)
+
+    sock = Sender_obj.get_socket()
+    timeout = TIMEOUT
+    connection_ended = False
+    while not connection_ended:
+        ready = select.select([sock], [], [], timeout)
+        if ready[0]:
+            data, addr = sock.recvfrom(MAX_RECV_FROM)
+            dec_data = Send_recv_func.decode_and_recieve(data)
+            if dec_data['FLAG'] == COMM_values.COMM_type["ACK"]:
+                Send_recv_func.send_out_COMM(Sender_obj, "FIN", 0)
+            elif dec_data['FLAG'] == COMM_values.COMM_type["ACK, FIN"]:
+                Send_recv_func.send_out_COMM(Sender_obj, "ACK", 0)
+                connection_ended = True
+            elif dec_data == False:
+                Send_recv_func.send_out_COMM(Sender_obj, "ERR", 0)
+        else: 
+            connection_ended = True
+    
+    print(f"Connection ended.")
+    return connection_ended
         
+
+
+
 
