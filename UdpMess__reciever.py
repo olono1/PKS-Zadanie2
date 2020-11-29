@@ -179,7 +179,7 @@ def process_recieved(fragmetns_list):
         print(f"Recieved message:\n {text_msg}")
         print(f"Number of recieved fragments: {len(fragmetns_list)}")
         print(f"Fragment size: {fragmetns_list[0]['LEN']}")
-        print(f"Last fragment size: {fragmetns_list[len(fragmetns_list)]['LEN']}")
+        print(f"Last fragment size: {fragmetns_list[len(fragmetns_list)-1]['LEN']}")
 
         pass
     elif data_type == "FILE":
