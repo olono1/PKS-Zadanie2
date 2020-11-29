@@ -45,6 +45,9 @@ class Reciever:
         self.__expected_SQ += 1
         return SQ
     
+    def reset_expected_sq(self):
+        self.__expected_SQ = 1
+
     def get_expected_SQ(self):
         return self.__expected_SQ
 
@@ -158,6 +161,7 @@ def listen(Reciever_obj: Reciever):
                     Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
                     process_recieved(recieved_fragments)
                     recieved_fragments.clear()
+
             
             
 

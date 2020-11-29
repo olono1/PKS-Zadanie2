@@ -63,6 +63,9 @@ class Sender:
         self.__SQ_num += 1
         return SQ_num
 
+    def reset_sq(self):
+        self.__SQ_num = 1
+
     def add_SQ_num(self):
         self.__SQ_num += 1
         return self.__SQ_num
@@ -194,9 +197,9 @@ def start_sender(Sender_obj: Sender):
     return
 
 
-def get_window_size(list_size, fisrt_sq):
+def get_window_size(list_size):
     global base
-    win_size = min(WINDOW_SIZE, (list_size+fisrt_sq) - base)
+    win_size = min(WINDOW_SIZE, list_size+ - base)
     return win_size
 
 def create_error_packet(dict_data):
@@ -216,13 +219,13 @@ def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
     timeout_pass = False
     ack_done = False
     stop_feedback = False
-    base = Sender_obj.get_SQ_num()
+    base = 0
 
-    first_sq = Sender_obj.get_SQ_num()
+    
 
-    next_frag = Sender_obj.get_SQ_num()
+    next_frag = 0
     sock = Sender_obj.get_socket()
-    itr_win_size = get_window_size(len(list_data), first_sq)
+    itr_win_size = get_window_size(len(list_data))
 
     recv_thread = threading.Thread(target=recv_feedback, args=(Sender_obj,))
     recv_thread.start()
@@ -246,7 +249,7 @@ def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
                 Send_recv_func.send_out_DATA(Sender_obj, error_sim_packet)
                 corupted_sent = True
             else:
-                Send_recv_func.send_out_DATA(Sender_obj, list_data[next_frag - first_sq])
+                Send_recv_func.send_out_DATA(Sender_obj, list_data[next_frag])
             next_frag += 1
 
         ack_done = False
@@ -260,11 +263,11 @@ def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
             timeout_pass = False
             next_frag = base - 1
         else:
-            itr_win_size = get_window_size(len(list_data), first_sq)
+            itr_win_size = get_window_size(len(list_data))
             
 
         mutex.release()
-        if base >= (len(list_data) + first_sq):
+        if base >= (len(list_data)):
             break
 
 
@@ -273,6 +276,7 @@ def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
     stop_feedback = True
     mutex.release()
     recv_thread.join()
+    Sender_obj.reset_sq()
     return
 
 def recv_feedback(Sender_obj: Sender):
