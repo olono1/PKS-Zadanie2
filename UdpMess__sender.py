@@ -115,6 +115,9 @@ def establish_connection(Sender_obj):
     return True
 
 def get_list_data_file(Sender_obj):
+    global keep_alive_error
+    if keep_alive_error == True:
+        return False
     flag = "FILE"
     load_data = input("Enter the file name>>> ")
     file_name = load_data.encode(TEXT_ENCODING_FORMAT)
@@ -130,6 +133,9 @@ def get_list_data_file(Sender_obj):
     return file_name_data_bits_list
 
 def get_list_data_msg(Sender_obj):
+    global keep_alive_error
+    if keep_alive_error == True:
+        return False
     flag = "MSG"
     load_data = input("Enter your super-duper message>>> ")
     binary_msg = load_data.encode(TEXT_ENCODING_FORMAT)
