@@ -140,7 +140,7 @@ def start_sender(Sender_obj: Sender):
     global sending_file_mutex
     global sending_file
 
-    keep_alive_thread = threading.Thread()
+    keep_alive_thread = threading.Thread(target=send_keep_alive, args=(Sender_obj,))
 
     while True:
         send_mode = input("1: Send Message\n2: Send File\n3:Disconnect")
@@ -155,10 +155,16 @@ def start_sender(Sender_obj: Sender):
             load_data = input("The connection will be ended. Are you sure? Y/N")
 
         ##TODO: #1 Check if the Conection has not been terminated by keep_alive protocol
+        if keep_alive_error == True:
+            Sender_obj.set_connection_established_status = False
 
         if establish_connection(Sender_obj):
             print("Connection Established")
         ##TODO: #2 Else statement to terminate sending data, if connection is not established
+        else:
+            print("The Connection is not established. Try again.")
+            keep_alive_thread.join()
+            return 
         corupted = input("Send 2nd packet with error? Y/N")
 
         if corupted == "Y" or corupted == "y":
@@ -166,15 +172,21 @@ def start_sender(Sender_obj: Sender):
         else:
             corupted = False
 
+        sending_file_mutex.acquire()
+        sending_file = True
+        sending_file_mutex.release()
         ##TODO: #3 Change sending_file variable True
         send_DATA(Sender_obj, list_data, corupted)
+        sending_file_mutex.acquire()
+        sending_file = False
+        sending_file_mutex.release()
         ##TODO: #4 Change sending_file variable to False
 
 
     #Sender_obj.get_socket().sendto(Send_recv_func.send_COMM("ACK", 5), Sender_obj.get_tuple())
     
 
-    
+    keep_alive_thread.join()
     return
 
 
@@ -271,4 +283,43 @@ def recv_feedback(Sender_obj: Sender):
             timeout_pass = True
             mutex.release()
 
+def send_keep_alive(Sender_obj):
+    global sending_file
+    global keep_alive_error
+    global sending_file_mutex
+    sock = Sender_obj.get_socket()
+    timeout = 4
+    no_response = 0
+    while True:
+        while sending_file:
+            time.sleep(TIMEOUT)
+        time.sleep(timeout)
+        if sending_file:
+            continue
+        else:
+            sending_file_mutex.acquire()
+            Send_recv_func.send_out_COMM(Sender_obj, "CONN", 0)
+            while True:
+                ready = select.select([sock], [], [], timeout)
+                if ready[0]:
+                    data, addr = sock.recvfrom(MAX_RECV_FROM)
+                    dec_data = Send_recv_func.decode_and_recieve(data)
+                    if dec_data == False:
+                        Send_recv_func.send_out_COMM(Sender_obj, "CONN", 0)
+                    elif dec_data['FLAG'] == COMM_values.COMM_type["ACK"]:
+                        keep_alive_error = False
+                        timeout = 4
+                        no_response = 0
+                        break
+                else:
+                    timeout *= 2
+                    no_response += 1
+                    if no_response > 2:
+                        keep_alive_error = True
+                        break
+        
+        sending_file_mutex.release()
+                    
+
+        
 
