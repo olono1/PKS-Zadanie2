@@ -294,7 +294,7 @@ def recv_feedback(Sender_obj: Sender):
     global ack_done
     global stop_feedback
 
-    print("I'm working")
+    #print("I'm working")
     mutex.acquire()
     stop_feedback = False
     mutex.release()
@@ -307,7 +307,7 @@ def recv_feedback(Sender_obj: Sender):
             dec_data = Send_recv_func.decode_and_recieve(data)
             if dec_data['FLAG'] == COMM_values.COMM_type["ACK"]:
                 if int(dec_data['ACK']) >= base:
-                    print("Got correct ACK")
+                    #print("Got correct ACK")
                     mutex.acquire()
                     base = int(dec_data['ACK']) + 1
                     ack_done = True
