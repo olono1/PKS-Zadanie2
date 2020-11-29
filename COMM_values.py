@@ -6,5 +6,6 @@ COMM_type = {
     "FILE": 4,
     "CONN": 130,
     "ERR" : 129,
+    "DONE": 194,
     "SYN, ACK" : 224
 }
