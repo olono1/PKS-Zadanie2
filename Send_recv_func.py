@@ -70,7 +70,7 @@ def count_lenght(data_to_prep, frag_len):
     else:
         return data_to_prep
     
-def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, last_SQ):
+def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, Sender_obj):
     data_to_prepare = len(data_in_bits)
     fragments = list() 
     SQ_num = 1
@@ -79,7 +79,7 @@ def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, last_SQ):
         fragment_x.append(COMM_values.COMM_type[pkt_type])
         frag_len = count_lenght(data_to_prepare, fragment_lenght)
         fragment_x.extend(frag_len.to_bytes(2, byteorder='big', signed=False))
-        fragment_x.extend(get_byte_ack(SQ_num + last_SQ))
+        fragment_x.extend(get_byte_ack(Sender_obj.reserve_SQ_num()))
         
         fragment_data = bytearray(data_in_bits[((SQ_num-1) * fragment_lenght):(SQ_num*fragment_lenght)])
 
@@ -88,7 +88,7 @@ def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, last_SQ):
         fragment_x.extend(crc32.to_bytes(4, byteorder='big', signed=False))
         fragment_x.extend(fragment_data)
         fragments.append(fragment_x)
-        print(decode_DATA(fragment_x))
+        #print(decode_DATA(fragment_x))
         SQ_num += 1
         data_to_prepare -= frag_len
 
@@ -108,6 +108,10 @@ def send_out_COMM(Comunication_obj, flag, ACK):
     data_to_send = send_COMM(flag, ACK)
     out_tuple = Comunication_obj.get_out_tuple()
     Comunication_obj.get_socket().sendto(data_to_send, out_tuple)
+
+def send_out_DATA(Comunication_obj, data):
+    out_tuple = Comunication_obj.get_out_tuple()
+    Comunication_obj.get_socket().sendto(data, out_tuple)
 
 
 def check_CRC_match(recieved_crc, counted_crc):
