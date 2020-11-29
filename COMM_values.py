@@ -7,5 +7,6 @@ COMM_type = {
     "CONN": 130,
     "ERR" : 129,
     "DONE": 194,
-    "SYN, ACK" : 224
+    "SYN, ACK" : 224,
+    "ACK, FIN" : 176
 }

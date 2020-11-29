@@ -162,9 +162,36 @@ def listen(Reciever_obj: Reciever):
                     process_recieved(recieved_fragments)
                     recieved_fragments.clear()
                     Reciever_obj.reset_expected_sq()
+                elif dec_data['FLAG'] == COMM_values.COMM_type["FIN"]:
+                    conn_ended = listen_for_conn_end(Reciever_obj)
 
             
-            
+def listen_for_conn_end(Reciever_obj):
+    connection_ended = False
+    Send_recv_func.send_out_COMM(Reciever_obj, "ACK, FIN", 0)
+    
+    sock = Reciever_obj.get_socket()
+    timeout = Reciever_obj.get_timeout()
+    while not connection_ended:
+        ready = select.select([sock], [], [], timeout)
+        if ready[0]:
+            data, addr = sock.recvfrom(MAX_RECV_FROM)
+            dec_data = Send_recv_func.decode_and_recieve(data)
+            if dec_data['FLAG'] == COMM_values.COMM_type["ACK"]:
+                connection_ended = True
+            elif dec_data['FLAG'] == COMM_values.COMM_type["ERR"]:
+                Send_recv_func.send_out_COMM(Reciever_obj, "ACK, FIN", 0)
+        else:
+            connection_ended = True
+    
+    print(f"Connection ended.")
+    return connection_ended
+        
+
+
+
+
+
 
 def get_data_type(fragment):
     if fragment['FLAG'] == COMM_values.COMM_type["MSG"]:
@@ -197,5 +224,8 @@ def process_recieved(fragmetns_list):
             for frag_sq in range(1, len(fragmetns_list)):
                 f.write(fragmetns_list[frag_sq]['DATA'])
         print("File recieved and saved sucesfully")
+        print(f"Number of recieved fragments: {len(fragmetns_list)}")
+        print(f"Fragment size: {fragmetns_list[1]['LEN']}")
+        print(f"Last fragment size {fragmetns_list[len(fragmetns_list)-1]['LEN']}")
         
         
