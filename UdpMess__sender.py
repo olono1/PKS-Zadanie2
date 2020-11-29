@@ -4,6 +4,7 @@ import time
 import binascii
 import threading
 import select
+import copy
 #Custom imports
 import Send_recv_func
 import COMM_values
@@ -12,8 +13,13 @@ import COMM_values
 
 MAX_RECV_FROM = 508
 TIMEOUT = 1
+SLEEP_TIME = 0.1
 WINDOW_SIZE = 5
 TEXT_ENCODING_FORMAT = 'utf-8'
+
+sending_file_mutex = threading.Lock()
+sending_file = False
+keep_alive_error = False
 
 base = 0
 mutex = threading.Lock()
@@ -115,7 +121,8 @@ def get_list_data_file(Sender_obj):
     
     frag_len = input("Enter Fragment lenght>>> ")
     file_bits_list = Send_recv_func.prepare_DATA(flag, load_data, int(frag_len), Sender_obj)
-    return file_bits_list
+    file_name_data_bits_list = file_name_list + file_bits_list
+    return file_name_data_bits_list
 
 def get_list_data_msg(Sender_obj):
     flag = "MSG"
@@ -130,26 +137,42 @@ def get_list_data_msg(Sender_obj):
 
 def start_sender(Sender_obj: Sender):
     #sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    send_mode = input("1: Send Message\n2: Send File\n3:Disconnect")
-    flag = ""
-    list_data = ""
-    start_SQ = Sender_obj.get_SQ_num()
-    if(send_mode == "1"):
-        list_data = get_list_data_msg(Sender_obj)
-    elif send_mode == "2":
-        list_data = get_list_data_file(Sender_obj)    
-    elif send_mode == "3":
-        load_data = input("The connection will be ended. Are you sure? Y/N")
+    global sending_file_mutex
+    global sending_file
 
-    if establish_connection(Sender_obj):
-        print("Connection Established")
+    keep_alive_thread = threading.Thread()
 
-    
-    send_DATA(Sender_obj, list_data)
+    while True:
+        send_mode = input("1: Send Message\n2: Send File\n3:Disconnect")
+        flag = ""
+        list_data = ""
+        start_SQ = Sender_obj.get_SQ_num()
+        if(send_mode == "1"):
+            list_data = get_list_data_msg(Sender_obj)
+        elif send_mode == "2":
+            list_data = get_list_data_file(Sender_obj)    
+        elif send_mode == "3":
+            load_data = input("The connection will be ended. Are you sure? Y/N")
+
+        ##TODO: #1 Check if the Conection has not been terminated by keep_alive protocol
+
+        if establish_connection(Sender_obj):
+            print("Connection Established")
+        ##TODO: #2 Else statement to terminate sending data, if connection is not established
+        corupted = input("Send 2nd packet with error? Y/N")
+
+        if corupted == "Y" or corupted == "y":
+            corupted = True
+        else:
+            corupted = False
+
+        ##TODO: #3 Change sending_file variable True
+        send_DATA(Sender_obj, list_data, corupted)
+        ##TODO: #4 Change sending_file variable to False
 
 
     #Sender_obj.get_socket().sendto(Send_recv_func.send_COMM("ACK", 5), Sender_obj.get_tuple())
-
+    
 
     
     return
@@ -160,7 +183,14 @@ def get_window_size(list_size):
     win_size = min(WINDOW_SIZE, list_size - base)
     return win_size
 
-def send_DATA(Sender_obj: Sender, list_data: list):
+def create_error_packet(dict_data):
+    corupted = dict_data
+    corupted[-1] = 254
+    print(corupted)
+    return corupted
+    
+
+def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
     global base
     global mutex
     global timeout_pass
@@ -173,23 +203,35 @@ def send_DATA(Sender_obj: Sender, list_data: list):
     recv_thread = threading.Thread(target=recv_feedback, args=(Sender_obj,))
     recv_thread.start()
 
+    if send_corupted == True:
+        second_packet = copy.deepcopy(list_data[2])
+        error_sim_packet = create_error_packet(second_packet)
+        print(f"Correct  packet:{list_data[2]}")
+        print(f"Corupted packet: {error_sim_packet}")
+    corupted_sent = False
+
+
     while True:
         mutex.acquire()
 
         while next_frag < base + itr_win_size:
-            Send_recv_func.send_out_DATA(Sender_obj, list_data[next_frag])
+            if not corupted_sent and next_frag == 2:
+                Send_recv_func.send_out_DATA(Sender_obj, error_sim_packet)
+                corupted_sent = True
+            else:
+                Send_recv_func.send_out_DATA(Sender_obj, list_data[next_frag])
             next_frag += 1
 
         ack_done = False
 
         while not ack_done and not timeout_pass:
             mutex.release()
-            time.sleep(TIMEOUT)
+            time.sleep(SLEEP_TIME)
             mutex.acquire()
         
         if timeout_pass:
             timeout_pass = False
-            next_frag = base
+            next_frag = base - 1
         else:
             itr_win_size = get_window_size(len(list_data))
             
@@ -200,7 +242,7 @@ def send_DATA(Sender_obj: Sender, list_data: list):
 
 
     Send_recv_func.send_out_COMM(Sender_obj, "DONE", 0)
-   
+    recv_thread.join()
     return
 
 def recv_feedback(Sender_obj: Sender):
@@ -228,3 +270,5 @@ def recv_feedback(Sender_obj: Sender):
             mutex.acquire()
             timeout_pass = True
             mutex.release()
+
+
