@@ -65,7 +65,7 @@ def send_COMM(type, ack_no):
     return byte_hex_arr
 
 def count_lenght(data_to_prep, frag_len):
-    if(data_to_prep > frag_len):
+    if(data_to_prep > int(frag_len)):
         return frag_len
     else:
         return data_to_prep

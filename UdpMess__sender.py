@@ -123,7 +123,7 @@ def get_list_data_msg(Sender_obj):
     binary_msg = load_data.encode(TEXT_ENCODING_FORMAT)
     load_data = binary_msg
     frag_len = input("Enter fragment length>>> ")
-    msg_bits_list = Send_recv_func.prepare_DATA(flag, binary_msg, frag_len)
+    msg_bits_list = Send_recv_func.prepare_DATA(flag, binary_msg, int(frag_len), Sender_obj)
     return msg_bits_list
         
 
