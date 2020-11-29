@@ -8,6 +8,7 @@ import select
 import os
 
 
+
 MAX_RECV_FROM = 508
 
 #Custom Import 
@@ -137,41 +138,44 @@ def listen(Reciever_obj: Reciever):
     no_respose = 0
     sock = Reciever_obj.get_socket()
     timeout = Reciever_obj.get_timeout()
+    try:
+        while True:
+            ready = select.select([sock], [], [], timeout)
+            if ready[0]:
+                data, addr = sock.recvfrom(MAX_RECV_FROM)
+                dec_data = Send_recv_func.decode_and_recieve(data)
 
-    while True:
-        ready = select.select([sock], [], [], timeout)
-        if ready[0]:
-            data, addr = sock.recvfrom(MAX_RECV_FROM)
-            dec_data = Send_recv_func.decode_and_recieve(data)
-
-            if dec_data == False:
-                Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.get_error_SQ())
-            elif Send_recv_func.get_pkt_type(dec_data['FLAG']) == "DATA":
-                if int(dec_data['SQ']) == Reciever_obj.get_expected_SQ():
-                    Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.use_expected_SQ())
-                    recieved_fragments.append(dec_data)
-                elif int(dec_data['SQ']) < Reciever_obj.get_expected_SQ():
+                if dec_data == False:
                     Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.get_error_SQ())
-                elif int(dec_data['SQ']) > Reciever_obj.get_expected_SQ():
-                    Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.get_error_SQ())
-            elif Send_recv_func.get_pkt_type(dec_data['FLAG']) == "COMM":
-                if dec_data['FLAG'] == COMM_values.COMM_type["CONN"]:
-                    Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
-                elif dec_data['FLAG'] == COMM_values.COMM_type["DONE"]:
-                    Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
-                    process_recieved(recieved_fragments)
-                    recieved_fragments.clear()
-                    Reciever_obj.reset_expected_sq()
-                elif dec_data['FLAG'] == COMM_values.COMM_type["FIN"]:
-                    conn_ended = listen_for_conn_end(Reciever_obj)
+                elif Send_recv_func.get_pkt_type(dec_data['FLAG']) == "DATA":
+                    if int(dec_data['SQ']) == Reciever_obj.get_expected_SQ():
+                        Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.use_expected_SQ())
+                        recieved_fragments.append(dec_data)
+                    elif int(dec_data['SQ']) < Reciever_obj.get_expected_SQ():
+                        Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.get_error_SQ())
+                    elif int(dec_data['SQ']) > Reciever_obj.get_expected_SQ():
+                        Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.get_error_SQ())
+                elif Send_recv_func.get_pkt_type(dec_data['FLAG']) == "COMM":
+                    if dec_data['FLAG'] == COMM_values.COMM_type["CONN"]:
+                        ##time.sleep(10)
+                        Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
+                    elif dec_data['FLAG'] == COMM_values.COMM_type["DONE"]:
+                        Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
+                        process_recieved(recieved_fragments)
+                        recieved_fragments.clear()
+                        Reciever_obj.reset_expected_sq()
+                    elif dec_data['FLAG'] == COMM_values.COMM_type["FIN"]:
+                        conn_ended = listen_for_conn_end(Reciever_obj)
+                        return
+                no_respose = 0
+            else:
+                no_respose += 1
+                if no_respose > 3:
+                    print("Sender did not send keep_alive or data. Timeout Exceeded")
+                    print("Connection terminated. Sender did not send anything anymore")
                     return
-            no_respose = 0
-        else:
-            no_respose += 1
-            if no_respose > 3:
-                print("Sender did not send keep_alive or data. Timeout Exceeded")
-                print("Connection terminated. Sender did not send anything anymore")
-                return
+    except KeyboardInterrupt:
+        print("The Reciver has been forcely terminated")
 
             
 def listen_for_conn_end(Reciever_obj):
