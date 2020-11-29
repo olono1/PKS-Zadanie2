@@ -157,6 +157,7 @@ def listen(Reciever_obj: Reciever):
                 elif dec_data['FLAG'] == COMM_values.COMM_type["DONE"]:
                     Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
                     process_recieved(recieved_fragments)
+                    recieved_fragments.clear()
             
             
 

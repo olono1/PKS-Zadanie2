@@ -18,13 +18,14 @@ WINDOW_SIZE = 5
 TEXT_ENCODING_FORMAT = 'utf-8'
 
 sending_file_mutex = threading.Lock()
-sending_file = False
+sending_file = True
 keep_alive_error = False
 
 base = 0
 mutex = threading.Lock()
 timeout_pass = False
 ack_done = False
+stop_feedback = False
 
 
 
@@ -139,9 +140,13 @@ def start_sender(Sender_obj: Sender):
     #sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     global sending_file_mutex
     global sending_file
+    global keep_alive_error
+
+    sending_file = True
+    keep_alive_error = False
 
     keep_alive_thread = threading.Thread(target=send_keep_alive, args=(Sender_obj,))
-
+    keep_alive_thread.start()
     while True:
         send_mode = input("1: Send Message\n2: Send File\n3:Disconnect")
         flag = ""
@@ -156,7 +161,7 @@ def start_sender(Sender_obj: Sender):
 
         ##TODO: #1 Check if the Conection has not been terminated by keep_alive protocol
         if keep_alive_error == True:
-            Sender_obj.set_connection_established_status = False
+            Sender_obj.set_connection_established_status(False)
 
         if establish_connection(Sender_obj):
             print("Connection Established")
@@ -177,6 +182,7 @@ def start_sender(Sender_obj: Sender):
         sending_file_mutex.release()
         ##TODO: #3 Change sending_file variable True
         send_DATA(Sender_obj, list_data, corupted)
+        print("File, sent")
         sending_file_mutex.acquire()
         sending_file = False
         sending_file_mutex.release()
@@ -207,6 +213,12 @@ def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
     global mutex
     global timeout_pass
     global ack_done
+    global stop_feedback
+
+    timeout_pass = False
+    ack_done = False
+    stop_feedback = False
+    base = 0
 
     next_frag = 0
     sock = Sender_obj.get_socket()
@@ -220,7 +232,10 @@ def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
         error_sim_packet = create_error_packet(second_packet)
         print(f"Correct  packet:{list_data[2]}")
         print(f"Corupted packet: {error_sim_packet}")
-    corupted_sent = False
+        corupted_sent = False
+    else:
+        corupted_sent = True
+    
 
 
     while True:
@@ -254,6 +269,9 @@ def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
 
 
     Send_recv_func.send_out_COMM(Sender_obj, "DONE", 0)
+    mutex.acquire()
+    stop_feedback = True
+    mutex.release()
     recv_thread.join()
     return
 
@@ -262,8 +280,12 @@ def recv_feedback(Sender_obj: Sender):
     global base
     global timeout_pass
     global ack_done
+    global stop_feedback
 
     print("I'm working")
+    mutex.acquire()
+    stop_feedback = False
+    mutex.release()
 
     sock = Sender_obj.get_socket()
     while True:
@@ -282,6 +304,8 @@ def recv_feedback(Sender_obj: Sender):
             mutex.acquire()
             timeout_pass = True
             mutex.release()
+        if stop_feedback == True:
+            break
 
 def send_keep_alive(Sender_obj):
     global sending_file
@@ -314,11 +338,15 @@ def send_keep_alive(Sender_obj):
                 else:
                     timeout *= 2
                     no_response += 1
+                    print("There has been a connection issue, please wait...")
                     if no_response > 2:
+                        print("Conection terminated")
                         keep_alive_error = True
                         break
-        
-        sending_file_mutex.release()
+            if keep_alive_error == True:
+                break
+            sending_file_mutex.release()
+    sending_file_mutex.release()
                     
 
         

@@ -25,15 +25,15 @@ MAX_RECV_FROM = 508
 def get_mode_from_user():
     
 
+    while True:
+        mode = input("Enter 1 for sender\nEnter 2 for reciever\nEnter 3 to exit program\n")
 
-    mode = input("Enter 1 for sender\nEnter 2 for reciever\nEnter 3 to exit program\n")
-
-    if mode == '1':
-        init_sender()
-    elif mode == '2':
-        init_reciever()
-    elif mode == '3':
-        exit_prog()
+        if mode == '1':
+            init_sender()
+        elif mode == '2':
+            init_reciever()
+        elif mode == '3':
+            exit_prog()
 
 
 
