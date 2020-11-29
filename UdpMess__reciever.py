@@ -5,6 +5,7 @@ import zlib
 import time
 import binascii
 import select
+import os
 
 
 MAX_RECV_FROM = 508
@@ -13,7 +14,8 @@ MAX_RECV_FROM = 508
 import Send_recv_func
 import COMM_values
 
-#Private variables
+#variables
+TEXT_ENCODING_FORMAT = 'utf-8'
 
 class Reciever:
 
@@ -26,6 +28,7 @@ class Reciever:
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.__sock.bind((my_ip, port_my))
         self.__timeout = 10
+        self.__expected_SQ = 1
         self.__active_connection = False
     
     def get_out_tuple(self):
@@ -36,6 +39,17 @@ class Reciever:
 
     def get_timeout(self):
         return self.__timeout
+
+    def use_expected_SQ(self):
+        SQ = self.__expected_SQ
+        self.__expected_SQ += 1
+        return SQ
+    
+    def get_expected_SQ(self):
+        return self.__expected_SQ
+
+    def get_error_SQ(self):
+        return self.__expected_SQ - 1
 
     def is_conn_estab(self):
         return self.__active_connection
@@ -90,7 +104,7 @@ def start_reciever(Reciever_obj: Reciever):
     
 
     if outcome == True:
-        listen()
+        listen(Reciever_obj)
     else:
         print("Connection was not established")
 
@@ -115,5 +129,67 @@ def start_reciever(Reciever_obj: Reciever):
     return
 
 
-def listen():
-    pass
+def listen(Reciever_obj: Reciever):
+    recieved_fragments = []
+
+    sock = Reciever_obj.get_socket()
+    timeout = Reciever_obj.get_timeout()
+
+    while True:
+        ready = select.select([sock], [], [], timeout)
+        if ready[0]:
+            data, addr = sock.recvfrom(MAX_RECV_FROM)
+            dec_data = Send_recv_func.decode_and_recieve(data)
+
+            if dec_data == False:
+                Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.get_error_SQ())
+            elif Send_recv_func.get_pkt_type(dec_data['FLAG']) == "DATA":
+                if int(dec_data['SQ']) == Reciever_obj.get_expected_SQ():
+                    Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.use_expected_SQ())
+                    recieved_fragments.append(dec_data)
+                elif int(dec_data['SQ']) < Reciever_obj.get_expected_SQ():
+                    Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.get_error_SQ())
+                elif int(dec_data['SQ']) > Reciever_obj.get_expected_SQ():
+                    Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.get_error_SQ())
+            elif Send_recv_func.get_pkt_type(dec_data['FLAG']) == "COMM":
+                if dec_data['FLAG'] == COMM_values.COMM_type["CONN"]:
+                    Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
+                elif dec_data['FLAG'] == COMM_values.COMM_type["DONE"]:
+                    Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
+                    process_recieved(recieved_fragments)
+            
+            
+
+def get_data_type(fragment):
+    if fragment['FLAG'] == COMM_values.COMM_type["MSG"]:
+        return "MSG"
+    elif fragment['FLAG'] == COMM_values.COMM_type["FILE"]:
+        return "FILE"
+    else:
+        return False
+
+def process_recieved(fragmetns_list):
+    data_type = get_data_type(fragmetns_list[0])
+
+    if data_type == "MSG":
+        msg = bytearray()
+        for fragment in fragmetns_list:
+            msg.extend(fragment['DATA'])
+        text_msg = msg.decode(TEXT_ENCODING_FORMAT)
+        print(f"Recieved message:\n {text_msg}")
+        print(f"Number of recieved fragments: {len(fragmetns_list)}")
+        print(f"Fragment size: {fragmetns_list[0]['LEN']}")
+        print(f"Last fragment size: {fragmetns_list[len(fragmetns_list)]['LEN']}")
+
+        pass
+    elif data_type == "FILE":
+        byte_file_name = bytearray()
+        byte_file_name.extend(fragmetns_list[0]['DATA'])
+        file_name = byte_file_name.decode(TEXT_ENCODING_FORMAT)
+        with open(file_name, 'wb') as f:
+            print(f"Saving file to location:\n{os.path.realpath(f.name)}")
+            for frag_sq in range(1, len(fragmetns_list)):
+                f.write(fragmetns_list[frag_sq]['DATA'])
+        print("File recieved and saved sucesfully")
+        
+        pass
