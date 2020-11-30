@@ -3,6 +3,8 @@ import COMM_values
 import zlib
 import binascii
 
+MAX_FRAG_LENGHT = 497 ##Based on the design of the protocol
+
 def get_byte_ack(number):
     return number.to_bytes(4, byteorder='big', signed=False)
 
@@ -45,6 +47,10 @@ def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, Sender_obj):
     data_to_prepare = len(data_in_bits)
     fragments = list() 
     SQ_num = 1
+    if fragment_lenght > MAX_FRAG_LENGHT:
+        print(f"MAX_FRAGMENT_LENGHT passed. Using {MAX_FRAG_LENGHT} for fragment lenght")
+        fragment_lenght = MAX_FRAG_LENGHT
+
     while data_to_prepare > 0:
         fragment_x = bytearray()
         fragment_x.append(COMM_values.COMM_type[pkt_type])
@@ -144,7 +150,7 @@ def decode_and_recieve(b_data):
         pkt_dict = decode_DATA(b_data)
  
     ### UN-COMMENT TO SEE WHAT DATA IS BEING RECIEVED ON BOTH ENDS
-    print(f"Recieved: {pkt_dict}")
+    #print(f"Recieved: {pkt_dict}")
     
     return pkt_dict
 
