@@ -121,7 +121,7 @@ def get_list_data_file(Sender_obj):
     flag = "FILE"
     load_data = input("Enter the file name>>> ")
     file_name = load_data.encode(TEXT_ENCODING_FORMAT)
-    file_name_list = Send_recv_func.prepare_DATA(flag, file_name, 500, Sender_obj)
+    file_name_list = Send_recv_func.prepare_DATA(flag, file_name, 497, Sender_obj)
 
     with open(load_data, "rb") as bin_file:
         data = bin_file.read()
@@ -159,7 +159,7 @@ def start_sender(Sender_obj: Sender):
     keep_alive_thread = threading.Thread(target=send_keep_alive, args=(Sender_obj,))
     keep_alive_thread.start()
     while True:
-        send_mode = input("1: Send Message\n2: Send File\n3:Disconnect")
+        send_mode = input("1: Send Message\n2: Send File\n3:Disconnect\n>>> ")
         flag = ""
         list_data = ""
         start_SQ = Sender_obj.get_SQ_num()
@@ -168,13 +168,17 @@ def start_sender(Sender_obj: Sender):
         elif send_mode == "2":
             list_data = get_list_data_file(Sender_obj)    
         elif send_mode == "3":
-            load_data = input("The connection will be ended. Are you sure? Y/N")
-            sending_file_mutex.acquire()
-            disconecting = True
-            sending_file_mutex.release()
-            keep_alive_thread.join()
-            end_connection(Sender_obj)
-            return
+            load_data = input("The connection will be ended. Are you sure? Y/N\n>>> ")
+            if load_data == "y" or load_data == "Y":
+                print("Stopping keep-alive packets...")
+                sending_file_mutex.acquire()
+                disconecting = True
+                sending_file_mutex.release()
+                keep_alive_thread.join()
+                end_connection(Sender_obj)
+                return
+            else:
+                continue
 
         ##TODO: #1 Check if the Conection has not been terminated by keep_alive protocol
         if keep_alive_error == True:
@@ -187,7 +191,7 @@ def start_sender(Sender_obj: Sender):
             print("The Connection is not established. Try again.")
             keep_alive_thread.join()
             return 
-        corupted = input("Send 2nd packet with error? Y/N")
+        corupted = input("Send 2nd packet with error? Y/N\n>>> ")
 
         if corupted == "Y" or corupted == "y":
             corupted = True
@@ -357,11 +361,12 @@ def send_keep_alive(Sender_obj):
                         no_response = 0
                         break
                 else:
+                    print(f"There has been a connection issue, please wait... Retry in {timeout}s")
                     timeout *= 2
                     no_response += 1
-                    print("There has been a connection issue, please wait...")
+                    
                     if no_response > 2:
-                        print("Conection terminated")
+                        print("Conection terminated. To return to menu press 3\n>>> ")
                         keep_alive_error = True
                         break
             if keep_alive_error == True or disconecting == True:
