@@ -5,6 +5,7 @@ import binascii
 import threading
 import select
 import copy
+import os
 #Custom imports
 import Send_recv_func
 import COMM_values
@@ -13,7 +14,7 @@ import COMM_values
 
 MAX_RECV_FROM = 508
 TIMEOUT = 1
-SLEEP_TIME = 0.1
+SLEEP_TIME = 0.01
 WINDOW_SIZE = 5
 TEXT_ENCODING_FORMAT = 'utf-8'
 
@@ -126,6 +127,7 @@ def get_list_data_file(Sender_obj):
     with open(load_data, "rb") as bin_file:
         data = bin_file.read()
         load_data = data
+        print(f"Preparing to send file: {os.path.realpath(bin_file.name)} ")
     
     frag_len = input("Enter Fragment lenght>>> ")
     file_bits_list = Send_recv_func.prepare_DATA(flag, load_data, int(frag_len), Sender_obj)
@@ -251,8 +253,9 @@ def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
     if send_corupted == True:
         second_packet = copy.deepcopy(list_data[2])
         error_sim_packet = create_error_packet(second_packet)
-        print(f"Correct  packet:{list_data[2]}")
+        print(f"Correct  packet:{list_data[2]}\n")
         print(f"Corupted packet: {error_sim_packet}")
+        print(f"\nSending...\n")
         corupted_sent = False
     else:
         corupted_sent = True
@@ -335,7 +338,7 @@ def send_keep_alive(Sender_obj):
     global sending_file_mutex
     global disconecting
     sock = Sender_obj.get_socket()
-    timeout = 4
+    timeout = 10
     no_response = 0
     while True:
         while sending_file:
@@ -386,9 +389,9 @@ def end_connection(Sender_obj):
         if ready[0]:
             data, addr = sock.recvfrom(MAX_RECV_FROM)
             dec_data = Send_recv_func.decode_and_recieve(data)
-            if dec_data['FLAG'] == COMM_values.COMM_type["ACK"]:
-                Send_recv_func.send_out_COMM(Sender_obj, "FIN", 0)
-            elif dec_data['FLAG'] == COMM_values.COMM_type["ACK, FIN"]:
+            #if dec_data['FLAG'] == COMM_values.COMM_type["ACK"]:
+             #   Send_recv_func.send_out_COMM(Sender_obj, "FIN", 0)
+            if dec_data['FLAG'] == COMM_values.COMM_type["ACK, FIN"]:
                 Send_recv_func.send_out_COMM(Sender_obj, "ACK", 0)
                 connection_ended = True
             elif dec_data == False:
