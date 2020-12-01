@@ -68,12 +68,20 @@ def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, Sender_obj):
         #print(decode_DATA(fragment_x))
         SQ_num += 1
         data_to_prepare -= frag_len
-
-
-    print(f"Prepared data. Sending {len(fragments)} fragments. Size of fragment {fragment_lenght}B")
+    
 
 
     return fragments
+
+def print_data_stats(pkt_type, fragments):
+    if pkt_type == "MSG":
+        size_frg = decode_DATA(fragments[0])
+        last_frg = decode_DATA(fragments[len(fragments)-1])
+        print(f"Sending {len(fragments)} fragments. Size of fragment {size_frg['LEN']}B. Size of last fragment {last_frg['LEN']}B")
+    elif pkt_type == "FILE":
+        size_frg = decode_DATA(fragments[1])
+        last_frg = decode_DATA(fragments[len(fragments)-1])
+        print(f"Sending {len(fragments)} fragments. Size of fragment n{size_frg['LEN']}B. Size of last fragment {last_frg['LEN']}B")
 
 def get_pkt_type(flag):
     if(flag >= 128):
