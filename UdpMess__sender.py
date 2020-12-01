@@ -191,6 +191,11 @@ def start_sender(Sender_obj: Sender):
         ##TODO: #2 Else statement to terminate sending data, if connection is not established
         else:
             print("The Connection is not established. Try again.")
+            sending_file_mutex.acquire()
+            disconecting = True
+            sending_file = False
+            sending_file_mutex.release()
+            print("Please wait, while we end proceses...")
             keep_alive_thread.join()
             return 
         corupted = input("Send 2nd packet with error? Y/N\n>>> ")
@@ -360,12 +365,10 @@ def send_keep_alive(Sender_obj):
                         Send_recv_func.send_out_COMM(Sender_obj, "CONN", 0)
                     elif dec_data['FLAG'] == COMM_values.COMM_type["ACK"]:
                         keep_alive_error = False
-                        timeout = 4
                         no_response = 0
                         break
                 else:
                     print(f"There has been a connection issue, please wait... Retry in {timeout}s")
-                    timeout *= 2
                     no_response += 1
                     
                     if no_response > 2:

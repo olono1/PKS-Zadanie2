@@ -70,7 +70,7 @@ def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, Sender_obj):
         data_to_prepare -= frag_len
 
 
-
+    print(f"Prepared data. Sending {len(fragments)} fragments. Size of fragment {fragment_lenght}B")
 
 
     return fragments

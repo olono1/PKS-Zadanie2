@@ -112,24 +112,6 @@ def start_reciever(Reciever_obj: Reciever):
     else:
         print("Connection was not established")
 
-
-
-    """
-    while True:
-        ready = select.select([sock], [], [], timeout)
-        if ready[0]:
-            data, addr = sock.recvfrom(508)
-            print(f"Recieved: {data}, from {addr} \n")
-            dec_data = Send_recv_func.decode_and_recieve(data)
-            print(f"We got {dec_data['FLAG']} with ACK no: {dec_data['ACK']} and a CRC: {dec_data['CRC']}")
-
-
-          
-        else:
-            print (f" Finish!")
-           
-            break
-    """
     return
 
 
@@ -138,6 +120,7 @@ def listen(Reciever_obj: Reciever):
     no_respose = 0
     sock = Reciever_obj.get_socket()
     timeout = Reciever_obj.get_timeout()
+    no_errors = True
     try:
         while True:
             ready = select.select([sock], [], [], timeout)
@@ -147,23 +130,29 @@ def listen(Reciever_obj: Reciever):
 
                 if dec_data == False:
                     Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.get_error_SQ())
+                    no_errors = False
                 elif Send_recv_func.get_pkt_type(dec_data['FLAG']) == "DATA":
                     if int(dec_data['SQ']) == Reciever_obj.get_expected_SQ():
                         Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.use_expected_SQ())
                         recieved_fragments.append(dec_data)
                     elif int(dec_data['SQ']) < Reciever_obj.get_expected_SQ():
                         Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.get_error_SQ())
+                        no_errors = False
                     elif int(dec_data['SQ']) > Reciever_obj.get_expected_SQ():
                         Send_recv_func.send_out_COMM(Reciever_obj, "ACK", Reciever_obj.get_error_SQ())
+                        no_errors = False
                 elif Send_recv_func.get_pkt_type(dec_data['FLAG']) == "COMM":
                     if dec_data['FLAG'] == COMM_values.COMM_type["CONN"]:
                         ##time.sleep(10)
                         Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
                     elif dec_data['FLAG'] == COMM_values.COMM_type["DONE"]:
                         Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
+                        if no_errors:
+                            print("The data was recieved with no errors durring transmission")
                         process_recieved(recieved_fragments)
                         recieved_fragments.clear()
                         Reciever_obj.reset_expected_sq()
+                        no_errors = True
                     elif dec_data['FLAG'] == COMM_values.COMM_type["FIN"]:
                         conn_ended = listen_for_conn_end(Reciever_obj)
                         return

@@ -1,4 +1,4 @@
-192.168.1.14    #My_IP_address
+192.168.1.12    #My_IP_address
 5055            #My Comunication_port
-192.168.1.11    #Other_side_IP_address
+192.168.1.14    #Other_side_IP_address
 5055            #Other_side_comunication_port

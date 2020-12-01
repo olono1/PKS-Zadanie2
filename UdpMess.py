@@ -52,8 +52,12 @@ def init_sender():
 
 def init_reciever():
     get_connection_info()
-    Comuni = UdpMess__reciever.Reciever(MY_IP_ADDR, COMM_PORT, OUT_IP_ADDR, OUT_COMM_PORT)
-    UdpMess__reciever.start_reciever(Comuni)
+    try:
+        Comuni = UdpMess__reciever.Reciever(MY_IP_ADDR, COMM_PORT, OUT_IP_ADDR, OUT_COMM_PORT)
+        UdpMess__reciever.start_reciever(Comuni)
+    except OSError:
+        print("Check the configuration file. Could not connect, with the specified data.")
+        print("Also check, that there is only one istance of the program running.")
 
 
 
