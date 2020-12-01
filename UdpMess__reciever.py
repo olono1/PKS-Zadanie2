@@ -28,7 +28,7 @@ class Reciever:
         self.__out_tuple = (out_ip, int(port_out))
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.__sock.bind((my_ip, port_my))
-        self.__timeout = 10
+        self.__timeout = 15
         self.__expected_SQ = 1
         self.__active_connection = False
     
