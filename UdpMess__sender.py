@@ -132,6 +132,7 @@ def get_list_data_file(Sender_obj):
     frag_len = input("Enter Fragment lenght>>> ")
     file_bits_list = Send_recv_func.prepare_DATA(flag, load_data, int(frag_len), Sender_obj)
     file_name_data_bits_list = file_name_list + file_bits_list
+    Send_recv_func.print_data_stats("FILE", file_name_data_bits_list)
     return file_name_data_bits_list
 
 def get_list_data_msg(Sender_obj):
@@ -144,6 +145,7 @@ def get_list_data_msg(Sender_obj):
     load_data = binary_msg
     frag_len = input("Enter fragment length>>> ")
     msg_bits_list = Send_recv_func.prepare_DATA(flag, binary_msg, int(frag_len), Sender_obj)
+    Send_recv_func.print_data_stats("MSG", msg_bits_list)
     return msg_bits_list
         
 
@@ -175,6 +177,7 @@ def start_sender(Sender_obj: Sender):
                 print("Stopping keep-alive packets...")
                 sending_file_mutex.acquire()
                 disconecting = True
+                sending_file = False
                 sending_file_mutex.release()
                 keep_alive_thread.join()
                 end_connection(Sender_obj)
