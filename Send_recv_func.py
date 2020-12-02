@@ -81,7 +81,7 @@ def print_data_stats(pkt_type, fragments):
     elif pkt_type == "FILE":
         size_frg = decode_DATA(fragments[1])
         last_frg = decode_DATA(fragments[len(fragments)-1])
-        print(f"Sending {len(fragments)} fragments. Size of fragment n{size_frg['LEN']}B. Size of last fragment {last_frg['LEN']}B")
+        print(f"Sending {len(fragments)} fragments. Size of fragment {size_frg['LEN']}B. Size of last fragment {last_frg['LEN']}B")
 
 def get_pkt_type(flag):
     if(flag >= 128):

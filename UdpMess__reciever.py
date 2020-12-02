@@ -4,12 +4,13 @@ import socket
 import zlib
 import time
 import binascii
+import threading
 import select
 import os
 
 
 
-MAX_RECV_FROM = 508
+
 
 #Custom Import 
 import Send_recv_func
@@ -17,6 +18,10 @@ import COMM_values
 
 #variables
 TEXT_ENCODING_FORMAT = 'utf-8'
+MAX_RECV_FROM = 508
+#globals for threads - keep-alive
+stop_keep_alive = False
+mutex_keep_alive = threading.Lock()
 
 class Reciever:
 
@@ -149,7 +154,7 @@ def listen(Reciever_obj: Reciever):
                         Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
                         if no_errors:
                             print("The data was recieved with no errors durring transmission")
-                        process_recieved(recieved_fragments)
+                        process_recieved(recieved_fragments, Reciever_obj)
                         recieved_fragments.clear()
                         Reciever_obj.reset_expected_sq()
                         no_errors = True
@@ -190,10 +195,6 @@ def listen_for_conn_end(Reciever_obj):
         
 
 
-
-
-
-
 def get_data_type(fragment):
     if fragment['FLAG'] == COMM_values.COMM_type["MSG"]:
         return "MSG"
@@ -202,8 +203,12 @@ def get_data_type(fragment):
     else:
         return False
 
-def process_recieved(fragmetns_list):
+def process_recieved(fragmetns_list, Reciever_obj):
+    global stop_keep_alive
+    global mutex_keep_alive
     data_type = get_data_type(fragmetns_list[0])
+
+    keep_connection_thread = threading.Thread(target=reply_for_keep_alive, args=(Reciever_obj))
 
     if data_type == "MSG":
         msg = bytearray()
@@ -221,14 +226,14 @@ def process_recieved(fragmetns_list):
         byte_file_name.extend(fragmetns_list[0]['DATA'])
         file_name = byte_file_name.decode(TEXT_ENCODING_FORMAT)
 
-        file_save_proc = input("Where shall we save this file?\n1 : To this repository\n 2 : Enter a path")
+        file_save_proc = input("Where shall we save this file?\n1 : To this repository\n2 : Enter a path\n>>> ")
         if file_save_proc == "1":
             with open(file_name, 'wb') as f:
                 print(f"Saving file to location:\n{os.path.realpath(f.name)}")
                 for frag_sq in range(1, len(fragmetns_list)):
                     f.write(fragmetns_list[frag_sq]['DATA'])
         else:
-            file_path = input("Enter the path where to save the recieved file")
+            file_path = input("Enter the path where to save the recieved file\n>>> ")
             full_name = os.path.join(file_path, file_name)
             write_to_file(full_name, fragmetns_list)
             #with open(full_name, 'wb') as f:
@@ -240,6 +245,11 @@ def process_recieved(fragmetns_list):
         print(f"Number of recieved fragments: {len(fragmetns_list)}")
         print(f"Fragment size: {fragmetns_list[1]['LEN']}")
         print(f"Last fragment size {fragmetns_list[len(fragmetns_list)-1]['LEN']}")
+
+    mutex_keep_alive.acquire()
+    stop_keep_alive = True
+    mutex_keep_alive.release()
+    keep_connection_thread.join()
         
         
 def write_to_file(file_name, fragmetns_list):
@@ -247,3 +257,28 @@ def write_to_file(file_name, fragmetns_list):
         print(f"Saving file to location:\n{os.path.realpath(f.name)}")
         for frag_sq in range(1, len(fragmetns_list)):
             f.write(fragmetns_list[frag_sq]['DATA'])
+
+def reply_for_keep_alive(Reciever_obj):
+    global stop_keep_alive
+    global mutex_keep_alive
+    sock = Reciever_obj.get_socket()
+    timeout = 2
+
+    mutex_keep_alive.acquire()
+    stop_keep_alive = False
+    mutex_keep_alive.release()
+
+    while True:
+        ready = select.select([sock], [], [], timeout)
+        if ready[0]:
+            data, addr = sock.recvfrom(MAX_RECV_FROM)
+            dec_data = Send_recv_func.decode_and_recieve(data)
+            if Send_recv_func.get_pkt_type(dec_data['FLAG']) == "COMM":
+                if dec_data['FLAG'] == COMM_values.COMM_type["CONN"]:
+                    Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
+        
+        if stop_keep_alive == True:
+            break ##File processing done
+
+
+    
