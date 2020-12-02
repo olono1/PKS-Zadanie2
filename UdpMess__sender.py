@@ -11,18 +11,18 @@ import Send_recv_func
 import COMM_values
 
 
-
+#Globals
 MAX_RECV_FROM = 508
 TIMEOUT = 1
 SLEEP_TIME = 0.01
 WINDOW_SIZE = 5
 TEXT_ENCODING_FORMAT = 'utf-8'
-
+#Globals for thread management - keep-alives
 sending_file_mutex = threading.Lock()
 sending_file = True
 keep_alive_error = False
 disconecting = False
-
+#Globals for ARQ
 base = 0
 mutex = threading.Lock()
 timeout_pass = False
@@ -107,12 +107,7 @@ def establish_connection(Sender_obj):
                 print("Connection could not be established")
                 print(Sender_obj.is_conn_estab())
                 return False
-            Send_recv_func.send_out_COMM(Sender_obj, "SYN", 0)
 
-
-
-        
-    
     return True
 
 def get_list_data_file(Sender_obj):
@@ -151,7 +146,6 @@ def get_list_data_msg(Sender_obj):
 
 
 def start_sender(Sender_obj: Sender):
-    #sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     global sending_file_mutex
     global sending_file
     global keep_alive_error
@@ -185,13 +179,13 @@ def start_sender(Sender_obj: Sender):
             else:
                 continue
 
-        ##TODO: #1 Check if the Conection has not been terminated by keep_alive protocol
+
         if keep_alive_error == True:
             Sender_obj.set_connection_established_status(False)
 
         if establish_connection(Sender_obj):
             print("Connection Established")
-        ##TODO: #2 Else statement to terminate sending data, if connection is not established
+      
         else:
             print("The Connection is not established. Try again.")
             sending_file_mutex.acquire()
@@ -210,17 +204,12 @@ def start_sender(Sender_obj: Sender):
 
         sending_file_mutex.acquire()
         sending_file = True
-        ##TODO: #3 Change sending_file variable True
+     
         send_DATA(Sender_obj, list_data, corupted)
         print("File, sent")
         sending_file = False
         sending_file_mutex.release()
-        ##TODO: #4 Change sending_file variable to False
-
-
-    #Sender_obj.get_socket().sendto(Send_recv_func.send_COMM("ACK", 5), Sender_obj.get_tuple())
     
-
     keep_alive_thread.join()
     return
 
@@ -301,6 +290,7 @@ def send_DATA(Sender_obj: Sender, list_data: list, send_corupted):
 
 
     Send_recv_func.send_out_COMM(Sender_obj, "DONE", 0)
+
     mutex.acquire()
     stop_feedback = True
     mutex.release()
@@ -315,7 +305,7 @@ def recv_feedback(Sender_obj: Sender):
     global ack_done
     global stop_feedback
 
-    #print("I'm working")
+
     mutex.acquire()
     stop_feedback = False
     mutex.release()
@@ -372,6 +362,7 @@ def send_keep_alive(Sender_obj):
                         break
                 else:
                     print(f"There has been a connection issue, please wait... Retry in {timeout}s")
+                    Send_recv_func.send_out_COMM(Sender_obj, "CONN", 0)
                     no_response += 1
                     
                     if no_response > 2:
@@ -395,8 +386,6 @@ def end_connection(Sender_obj):
         if ready[0]:
             data, addr = sock.recvfrom(MAX_RECV_FROM)
             dec_data = Send_recv_func.decode_and_recieve(data)
-            #if dec_data['FLAG'] == COMM_values.COMM_type["ACK"]:
-             #   Send_recv_func.send_out_COMM(Sender_obj, "FIN", 0)
             if dec_data['FLAG'] == COMM_values.COMM_type["ACK, FIN"]:
                 Send_recv_func.send_out_COMM(Sender_obj, "ACK", 0)
                 connection_ended = True
