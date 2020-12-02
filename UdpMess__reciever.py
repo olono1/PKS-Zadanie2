@@ -220,13 +220,30 @@ def process_recieved(fragmetns_list):
         byte_file_name = bytearray()
         byte_file_name.extend(fragmetns_list[0]['DATA'])
         file_name = byte_file_name.decode(TEXT_ENCODING_FORMAT)
-        with open(file_name, 'wb') as f:
-            print(f"Saving file to location:\n{os.path.realpath(f.name)}")
-            for frag_sq in range(1, len(fragmetns_list)):
-                f.write(fragmetns_list[frag_sq]['DATA'])
+
+        file_save_proc = input("Where shall we save this file?\n1 : To this repository\n 2 : Enter a path")
+        if file_save_proc == "1":
+            with open(file_name, 'wb') as f:
+                print(f"Saving file to location:\n{os.path.realpath(f.name)}")
+                for frag_sq in range(1, len(fragmetns_list)):
+                    f.write(fragmetns_list[frag_sq]['DATA'])
+        else:
+            file_path = input("Enter the path where to save the recieved file")
+            full_name = os.path.join(file_path, file_name)
+            write_to_file(full_name, fragmetns_list)
+            #with open(full_name, 'wb') as f:
+            #    print(f"Saving file to location:\n{os.path.realpath(f.name)}")
+            #    for frag_sq in range(1, len(fragmetns_list)):
+            #        f.write(fragmetns_list[frag_sq]['DATA'])
+
         print("File recieved and saved sucesfully")
         print(f"Number of recieved fragments: {len(fragmetns_list)}")
         print(f"Fragment size: {fragmetns_list[1]['LEN']}")
         print(f"Last fragment size {fragmetns_list[len(fragmetns_list)-1]['LEN']}")
         
         
+def write_to_file(file_name, fragmetns_list):
+    with open(file_name, 'wb') as f:
+        print(f"Saving file to location:\n{os.path.realpath(f.name)}")
+        for frag_sq in range(1, len(fragmetns_list)):
+            f.write(fragmetns_list[frag_sq]['DATA'])
