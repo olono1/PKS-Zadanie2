@@ -71,35 +71,36 @@ class Reciever:
 def listen_for_connection(Reciever_obj):
     sock = Reciever_obj.get_socket()
     timeout = Reciever_obj.get_timeout()
-
-    while not Reciever_obj.is_conn_estab():
+    try:
+        while not Reciever_obj.is_conn_estab():
         ##Wait for SYN packet
-        syn_recv_and_replied = False
-        no_response = 0
-        while True:
-            ready = select.select([sock], [], [], timeout)
-            if ready[0]:
-                data, addr = sock.recvfrom(MAX_RECV_FROM)
-                dec_data = Send_recv_func.decode_and_recieve(data)
-                if dec_data == False:
-                    Send_recv_func.send_out_COMM(Reciever_obj, "ERR", 0)
-                elif dec_data['FLAG'] == COMM_values.COMM_type['SYN']:
-                    Send_recv_func.send_out_COMM(Reciever_obj, "SYN, ACK", 0)
-                    syn_recv_and_replied = True
-                if syn_recv_and_replied and dec_data['FLAG'] == COMM_values.COMM_type['ACK']:
-                    Reciever_obj.set_conn_status(True)
-                    break
-                if dec_data['FLAG'] == COMM_values.COMM_type["ERR"]:
+            syn_recv_and_replied = False
+            no_response = 0
+            while True:
+                ready = select.select([sock], [], [], timeout)
+                if ready[0]:
+                    data, addr = sock.recvfrom(MAX_RECV_FROM)
+                    dec_data = Send_recv_func.decode_and_recieve(data)
+                    if dec_data == False:
+                        Send_recv_func.send_out_COMM(Reciever_obj, "ERR", 0)
+                    elif dec_data['FLAG'] == COMM_values.COMM_type['SYN']:
+                        Send_recv_func.send_out_COMM(Reciever_obj, "SYN, ACK", 0)
+                        syn_recv_and_replied = True
+                    if syn_recv_and_replied and dec_data['FLAG'] == COMM_values.COMM_type['ACK']:
+                        Reciever_obj.set_conn_status(True)
+                        break
+                    if dec_data['FLAG'] == COMM_values.COMM_type["ERR"]:
+                        if syn_recv_and_replied == True:
+                            Send_recv_func.send_out_COMM(Reciever_obj, "SYN, ACK", 0)
+                else:
                     if syn_recv_and_replied == True:
                         Send_recv_func.send_out_COMM(Reciever_obj, "SYN, ACK", 0)
-            else:
-                if syn_recv_and_replied == True:
-                    Send_recv_func.send_out_COMM(Reciever_obj, "SYN, ACK", 0)
-                    no_response += 1
-                if no_response > 2:
-                    print("Connection could not be established.")
-                    return False
-
+                        no_response += 1
+                    if no_response > 2:
+                        print("Connection could not be established.")
+                        return False
+    except KeyboardInterrupt:
+        print("The Reciver has stopped listening for a connection segment")
 
 
     return True
@@ -228,18 +229,12 @@ def process_recieved(fragmetns_list, Reciever_obj):
 
         file_save_proc = input("Where shall we save this file?\n1 : To this repository\n2 : Enter a path\n>>> ")
         if file_save_proc == "1":
-            with open(file_name, 'wb') as f:
-                print(f"Saving file to location:\n{os.path.realpath(f.name)}")
-                for frag_sq in range(1, len(fragmetns_list)):
-                    f.write(fragmetns_list[frag_sq]['DATA'])
+            write_to_file(file_name, fragmetns_list)
         else:
             file_path = input("Enter the path where to save the recieved file\n>>> ")
             full_name = os.path.join(file_path, file_name)
             write_to_file(full_name, fragmetns_list)
-            #with open(full_name, 'wb') as f:
-            #    print(f"Saving file to location:\n{os.path.realpath(f.name)}")
-            #    for frag_sq in range(1, len(fragmetns_list)):
-            #        f.write(fragmetns_list[frag_sq]['DATA'])
+
 
         print("File recieved and saved sucesfully")
         print(f"Number of recieved fragments: {len(fragmetns_list)}")
