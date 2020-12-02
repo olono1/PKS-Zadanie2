@@ -149,7 +149,7 @@ def listen(Reciever_obj: Reciever):
                         no_errors = False
                 elif Send_recv_func.get_pkt_type(dec_data['FLAG']) == "COMM":
                     if dec_data['FLAG'] == COMM_values.COMM_type["CONN"]:
-                        ##time.sleep(10)
+                        ##time.sleep(10) #Use to simulate connection interupt
                         Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
                     elif dec_data['FLAG'] == COMM_values.COMM_type["DONE"]:
                         Send_recv_func.send_out_COMM(Reciever_obj, "ACK", 0)
