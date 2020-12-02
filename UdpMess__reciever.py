@@ -228,18 +228,12 @@ def process_recieved(fragmetns_list, Reciever_obj):
 
         file_save_proc = input("Where shall we save this file?\n1 : To this repository\n2 : Enter a path\n>>> ")
         if file_save_proc == "1":
-            with open(file_name, 'wb') as f:
-                print(f"Saving file to location:\n{os.path.realpath(f.name)}")
-                for frag_sq in range(1, len(fragmetns_list)):
-                    f.write(fragmetns_list[frag_sq]['DATA'])
+            write_to_file(file_name, fragmetns_list)
         else:
             file_path = input("Enter the path where to save the recieved file\n>>> ")
             full_name = os.path.join(file_path, file_name)
             write_to_file(full_name, fragmetns_list)
-            #with open(full_name, 'wb') as f:
-            #    print(f"Saving file to location:\n{os.path.realpath(f.name)}")
-            #    for frag_sq in range(1, len(fragmetns_list)):
-            #        f.write(fragmetns_list[frag_sq]['DATA'])
+
 
         print("File recieved and saved sucesfully")
         print(f"Number of recieved fragments: {len(fragmetns_list)}")
