@@ -65,7 +65,7 @@ def init_reciever():
 def exit_prog():
     exit()
 
-#Common functions > Sending COMM packets, Bit operations, 
+#Common functions
 
 def get_connection_info():
     global MY_IP_ADDR 
@@ -82,7 +82,8 @@ def get_connection_info():
     print(f"Connecting to: {OUT_IP_ADDR} : {OUT_COMM_PORT}")
 
 
+##Start function
 get_mode_from_user()
-get_connection_info()
-#send_COMM("SYN", 5)
+
+
 
