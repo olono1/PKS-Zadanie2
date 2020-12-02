@@ -208,7 +208,7 @@ def process_recieved(fragmetns_list, Reciever_obj):
     global mutex_keep_alive
     data_type = get_data_type(fragmetns_list[0])
 
-    keep_connection_thread = threading.Thread(target=reply_for_keep_alive, args=(Reciever_obj))
+    keep_connection_thread = threading.Thread(target=reply_for_keep_alive, args=(Reciever_obj,))
     keep_connection_thread.start()
     if data_type == "MSG":
         msg = bytearray()
