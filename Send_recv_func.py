@@ -70,7 +70,7 @@ def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, Sender_obj, every_seco
         fragment_x.extend(crc32.to_bytes(4, byteorder='big', signed=False))
         fragment_x.extend(fragment_data)
         fragments.append(fragment_x)
-        #print(f"Prepaded data:{decode_DATA(fragment_x)}") ##Uncoment to see how the data was prepared
+        print(f"Prepaded data:{decode_DATA(fragment_x)}") ##Uncoment to see how the data was prepared
         SQ_num += 1
         data_to_prepare -= frag_len
 
