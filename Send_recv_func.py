@@ -43,7 +43,7 @@ def count_lenght(data_to_prep, frag_len):
     else:
         return data_to_prep
     
-def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, Sender_obj):
+def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, Sender_obj, every_second):
     data_to_prepare = len(data_in_bits)
     fragments = list() 
     SQ_num = 1
@@ -52,9 +52,14 @@ def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, Sender_obj):
         fragment_lenght = MAX_FRAG_LENGHT
 
     while data_to_prepare > 0:
+        frag_len = count_lenght(data_to_prepare, fragment_lenght)
+        if every_second == True and (SQ_num % 2 > 0):
+            data_to_prepare -= frag_len
+            SQ_num += 1
+            continue 
         fragment_x = bytearray()
         fragment_x.append(COMM_values.COMM_type[pkt_type])
-        frag_len = count_lenght(data_to_prepare, fragment_lenght)
+        
         fragment_x.extend(frag_len.to_bytes(2, byteorder='big', signed=False))
         fragment_x.extend(get_byte_ack(Sender_obj.reserve_SQ_num()))
         
@@ -65,9 +70,10 @@ def prepare_DATA(pkt_type, data_in_bits, fragment_lenght, Sender_obj):
         fragment_x.extend(crc32.to_bytes(4, byteorder='big', signed=False))
         fragment_x.extend(fragment_data)
         fragments.append(fragment_x)
-        #print(f"Prepaded data:{decode_DATA(fragment_x)}") ##Uncoment to see how the data was prepared
+        print(f"Prepaded data:{decode_DATA(fragment_x)}") ##Uncoment to see how the data was prepared
         SQ_num += 1
         data_to_prepare -= frag_len
+
     
 
 
