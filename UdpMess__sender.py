@@ -125,7 +125,7 @@ def get_list_data_file(Sender_obj):
         print(f"Preparing to send file: {os.path.realpath(bin_file.name)} ")
     
     frag_len = input("Enter Fragment lenght>>> ")
-    file_bits_list = Send_recv_func.prepare_DATA(flag, load_data, int(frag_len), Sender_obj)
+    file_bits_list = Send_recv_func.prepare_DATA(flag, load_data, int(frag_len), Sender_obj, False)
     file_name_data_bits_list = file_name_list + file_bits_list
     Send_recv_func.print_data_stats("FILE", file_name_data_bits_list)
     return file_name_data_bits_list
@@ -139,7 +139,7 @@ def get_list_data_msg(Sender_obj):
     binary_msg = load_data.encode(TEXT_ENCODING_FORMAT)
     load_data = binary_msg
     frag_len = input("Enter fragment length>>> ")
-    msg_bits_list = Send_recv_func.prepare_DATA(flag, binary_msg, int(frag_len), Sender_obj)
+    msg_bits_list = Send_recv_func.prepare_DATA(flag, binary_msg, int(frag_len), Sender_obj, True)
     Send_recv_func.print_data_stats("MSG", msg_bits_list)
     return msg_bits_list
         
