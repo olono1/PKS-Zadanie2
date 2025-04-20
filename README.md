@@ -1,3 +1,4 @@
+*Note: this documentation is a translation from the original in Slovak*
 # Assignment documentation No. 2
 
 Computer and communication networks WS 2020/2021
